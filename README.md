@@ -6,18 +6,21 @@
 
 **Give AI the ability to transact — without giving AI unrestricted access to money.**
 
-<br/>
+<br />
 
-[![Razorpay AI Buildathon 2026](https://img.shields.io/badge/Razorpay%20AI%20Buildathon-2026-0C2340?style=for-the-badge)](https://razorpay.com/)
-[![Next.js 15](https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com/)
-[![Python 3.11+](https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python)](https://www.python.org/)
-[![Razorpay](https://img.shields.io/badge/Payments-Razorpay-0C2340?style=for-the-badge)](https://razorpay.com/)
-[![Ed25519](https://img.shields.io/badge/Cryptography-Ed25519-7C3AED?style=for-the-badge)](https://ed25519.cr.yp.to/)
-[![God Mode QA](https://img.shields.io/badge/QA-8%2F8%20PASS-success?style=for-the-badge)](backend/test_god_mode.py)
-[![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue?style=for-the-badge)](LICENSE)
+[![Razorpay AI Buildathon](https://img.shields.io/badge/Razorpay%20AI%20Buildathon-2026-0C2340?style=for-the-badge)](https://razorpay.com/)
+[![Next.js](https://img.shields.io/badge/Next.js-15-000000?style=for-the-badge&logo=next.js&logoColor=white)](https://nextjs.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
 
-<br/>
+<br />
+
+[![Payments](https://img.shields.io/badge/Payments-Razorpay-0C2340?style=for-the-badge)](https://razorpay.com/)
+[![Security](https://img.shields.io/badge/Security-Ed25519%20%2B%20SHA--256-7C3AED?style=for-the-badge)](#-security-model)
+[![Tests](https://img.shields.io/badge/Tests-8%2F8%20PASS-16A34A?style=for-the-badge)](#-testing)
+[![License](https://img.shields.io/badge/License-Apache%202.0-2563EB?style=for-the-badge)](LICENSE)
+
+<br /><br />
 
 > **AI can reason. AI can negotiate. AI can recommend.**
 >
