@@ -171,8 +171,9 @@ export default function NegotiationStoryboard({ entries, onClose, className = ""
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="text-sm font-bold text-white tracking-wide">
-                🤖 LIVE AGENT NEGOTIATION
+              <h3 className="text-sm font-semibold text-white tracking-normal flex items-center gap-1.5">
+                <Bot className="w-4 h-4 text-cyan-400" />
+                <span>Live Agent Negotiation</span>
               </h3>
               <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-zinc-800 text-cyan-400 border border-cyan-500/30">
                 A2A Protocol

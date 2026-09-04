@@ -3,10 +3,40 @@
 import { useState, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
-import { Rocket, Network, ScrollText, Swords, BarChart3, Store } from "lucide-react";
+import { 
+  Rocket, 
+  Network, 
+  ScrollText, 
+  Swords, 
+  BarChart3, 
+  Store,
+  Siren,
+  TrendingUp,
+  Mic,
+  ShieldCheck,
+  Bell,
+  TerminalSquare,
+  Bot,
+  CreditCard,
+  Link2,
+  Zap,
+  Lock,
+  CheckCircle2,
+  XCircle,
+  Loader2,
+  Hexagon,
+  RefreshCw,
+  AlertTriangle,
+  User,
+  Building2
+} from "lucide-react";
 import RedTeamArena from "@/components/RedTeamArena";
 import type { PassportData } from "@/components/TransactionPassport";
 import RevenueRescue from "@/components/RevenueRescue";
+import { Panel, PanelHeader, Badge, Button } from "@/components/ui/primitives";
+import { NumberTicker } from "@/components/magicui/number-ticker";
+import { BorderBeam } from "@/components/magicui/border-beam";
+import { DotPattern } from "@/components/magicui/dot-pattern";
 
 const TransactionPassport = dynamic(() => import("@/components/TransactionPassport"), { ssr: false });
 const WarRoomTerminal = dynamic(() => import("@/components/WarRoomTerminal"), { ssr: false });
@@ -379,65 +409,61 @@ export default function Dashboard() {
 
   const spendPct = mandate ? Math.min(100, (mandate.spent_amount / mandate.max_amount) * 100) : 0;
 
-  // Render Cryptographic Audit Ledger Component
+  // ── Render Cryptographic Audit Ledger ─────────────────────
   const renderAuditLedger = (isDedicatedView: boolean = false) => (
-    <div className={`glass-card p-6 shadow-2xl flex flex-col ${isDedicatedView ? "h-[82vh]" : (rightPanelTab === "LEDGER" ? "h-[80vh]" : "h-[45vh]")} animate-fade-in-up delay-150`}>
+    <Panel className={`flex flex-col ${isDedicatedView ? "h-[82vh]" : (rightPanelTab === "LEDGER" ? "h-[80vh]" : "h-[45vh]")} animate-fade-in-up`}>
       {/* Ledger Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-4 border-b border-zinc-800/50 gap-3">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-indigo-500" />
-            </span>
-            <h2 className="text-lg font-bold text-white tracking-tight">
-              Cryptographic Audit Ledger
-            </h2>
+      <PanelHeader
+        icon={<Link2 size={18} />}
+        title={
+          <div className="flex items-center gap-2">
+            <span>Cryptographic Audit Ledger</span>
+            <span className="text-[10px] text-zinc-500 font-normal tracking-wide">SHA-256 Merkle Chained</span>
           </div>
-          <p className="text-[10px] text-zinc-600 font-mono mt-0.5 tracking-wide">
-            SHA-256 HASH CHAINED • TAMPER-EVIDENT • APPEND-ONLY
-          </p>
-        </div>
+        }
+        meta={
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={verifyLedger}
+              disabled={verifyingChain}
+            >
+              <Link2 size={13} />
+              <span>{verifyingChain ? "Verifying..." : "Verify Chain"}</span>
+            </Button>
 
-        <div className="flex items-center gap-2">
-          <button
-            onClick={verifyLedger}
-            disabled={verifyingChain}
-            className="px-3.5 py-1.5 bg-zinc-800/80 hover:bg-zinc-700 text-zinc-200 text-xs font-semibold rounded-lg transition-all border border-zinc-700/60 flex items-center gap-1.5"
-          >
-            {verifyingChain ? "Verifying..." : "🔗 Verify Chain"}
-          </button>
-
-          <button
-            onClick={simulateTamper}
-            disabled={tamperLoading || ledger.length === 0}
-            className="px-3.5 py-1.5 bg-rose-950/50 hover:bg-rose-900/60 text-rose-300 text-xs font-semibold rounded-lg transition-all border border-rose-800/50 flex items-center gap-1.5"
-          >
-            {tamperLoading ? "Mutating..." : "💀 Simulate Tamper"}
-          </button>
-        </div>
-      </div>
+            <Button
+              variant="danger"
+              size="sm"
+              onClick={simulateTamper}
+              disabled={tamperLoading || ledger.length === 0}
+            >
+              <XCircle size={13} />
+              <span>{tamperLoading ? "Mutating..." : "Simulate Tamper"}</span>
+            </Button>
+          </div>
+        }
+      />
 
       {/* Integrity Alert Banner */}
       {verifyStatus && !verifyStatus.is_valid && (
-        <div className="my-3 p-3.5 bg-red-950/70 border-2 border-red-500/60 rounded-xl text-red-200 text-xs flex items-center gap-3 animate-pulse shadow-lg shadow-red-950/30">
-          <span className="text-lg">🚨</span>
+        <div className="mx-5 my-3 p-3.5 bg-rose-950/70 border border-rose-500/40 rounded-xl text-rose-200 text-xs flex items-center gap-3 animate-pulse">
+          <Siren size={18} className="text-rose-400 shrink-0" />
           <div>
-            <strong className="font-bold text-white">SECURITY ALERT: Cryptographic Chain Invalidation!</strong>
-            <p className="text-[11px] text-red-300/90 font-mono mt-0.5">{verifyStatus.reason}</p>
+            <strong className="font-semibold text-white">Security Alert: Cryptographic Chain Invalidation</strong>
+            <p className="text-[11px] text-rose-300 font-mono mt-0.5">{verifyStatus.reason}</p>
           </div>
         </div>
       )}
 
       {/* Ledger Stream */}
-      <div ref={ledgerScrollRef} className="flex-1 overflow-y-auto space-y-3 pr-2 my-4 custom-scrollbar">
+      <div ref={ledgerScrollRef} className="flex-1 overflow-y-auto space-y-3 p-5 pr-3 custom-scrollbar">
         {ledger.length === 0 ? (
-          <div className="h-full flex flex-col items-center justify-center text-zinc-700 space-y-3 py-16">
-            <svg className="w-16 h-16 stroke-current opacity-20" viewBox="0 0 24 24" fill="none">
-              <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-            <p className="text-sm font-mono">Genesis ledger awaiting initialization...</p>
-            <p className="text-[10px] text-zinc-800">Authorize a mandate to begin the audit trail</p>
+          <div className="h-full flex flex-col items-center justify-center text-zinc-600 space-y-3 py-16">
+            <ScrollText size={48} className="stroke-current opacity-20" />
+            <p className="text-sm font-medium">Genesis ledger awaiting initialization</p>
+            <p className="text-xs text-zinc-500">Authorize a mandate to begin the audit trail</p>
           </div>
         ) : (
           ledger.map((entry) => {
@@ -451,60 +477,56 @@ export default function Dashboard() {
             return (
               <div
                 key={entry.seq}
-                className={`p-4 rounded-xl border font-mono text-xs transition-all relative group ${
+                className={`p-4 rounded-xl border text-xs transition-all relative ${
                   isKillSwitch
-                    ? "bg-rose-950/40 border-rose-500/50 text-rose-100 ring-1 ring-rose-500/20 shadow-md shadow-rose-950/20"
+                    ? "bg-rose-950/40 border-rose-500/50 text-rose-100 ring-1 ring-rose-500/20"
                   : isRedTeam
                     ? "bg-rose-950/25 border-rose-800/60 text-rose-100"
                   : entry.gate_result === "FAIL"
                     ? "bg-rose-950/20 border-rose-800/50 text-rose-100"
                   : entry.action === "TOPUP_LINK_GENERATED"
-                    ? "bg-gradient-to-r from-amber-950/40 to-zinc-950 border-amber-500/60 text-amber-100 ring-1 ring-amber-500/30 shadow-md shadow-amber-950/30"
+                    ? "bg-amber-950/30 border-amber-500/50 text-amber-100"
                   : entry.action === "PAYMENT_EXECUTED"
                     ? "bg-emerald-950/25 border-emerald-500/40 text-emerald-100 ring-1 ring-emerald-500/20"
                   : isMerchant
-                    ? "bg-purple-950/15 border-purple-900/40 text-purple-200"
+                    ? "bg-amber-950/15 border-amber-900/30 text-amber-200"
                   : isBuyer
-                    ? "bg-blue-950/15 border-blue-900/40 text-blue-200"
-                  : "bg-zinc-950/50 border-zinc-800/50 text-zinc-300"
+                    ? "bg-cyan-950/20 border-cyan-800/30 text-cyan-200"
+                  : "bg-zinc-900/60 border-zinc-800/60 text-zinc-300"
                 }`}
               >
                 {/* Header Row */}
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2 min-w-0">
-                    <span className="shrink-0 px-1.5 py-0.5 rounded text-[10px] font-bold bg-zinc-800/80 text-zinc-500">
+                    <span className="shrink-0 px-1.5 py-0.5 rounded text-[10px] font-mono bg-zinc-800 text-zinc-400">
                       #{entry.seq < 10 ? `0${entry.seq}` : entry.seq}
                     </span>
 
-                    <span className={`shrink-0 px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                      isKillSwitch ? "bg-rose-500/20 text-rose-300 border border-rose-500/40" :
-                      isRedTeam ? "bg-rose-500/15 text-rose-400 border border-rose-500/25" :
-                      entry.action === "TOPUP_LINK_GENERATED" ? "bg-amber-500/15 text-amber-300 border border-amber-500/30" :
-                      isBuyer ? "bg-blue-500/15 text-blue-400 border border-blue-500/25" :
-                      isMerchant ? "bg-purple-500/15 text-purple-400 border border-purple-500/25" :
-                      isSemantic ? "bg-amber-500/15 text-amber-400 border border-amber-500/25" :
-                      isFinancial ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/25" :
-                      "bg-zinc-800/60 text-zinc-400 border border-zinc-700/40"
-                    }`}>
+                    <Badge
+                      tone={
+                        isKillSwitch || isRedTeam ? "danger" :
+                        entry.action === "TOPUP_LINK_GENERATED" || isSemantic ? "warn" :
+                        isFinancial || entry.action === "PAYMENT_EXECUTED" ? "success" :
+                        "neutral"
+                      }
+                      className="text-[10px]"
+                    >
                       {entry.actor}
-                    </span>
+                    </Badge>
 
-                    <span className="font-bold text-zinc-300 truncate">
+                    <span className="font-semibold text-zinc-200 truncate font-mono text-[11px]">
                       [{entry.action}]
                     </span>
                   </div>
 
                   <div className="flex items-center gap-2 shrink-0">
                     {entry.gate_result && (
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-black tracking-wider uppercase ${
-                        entry.gate_result === "PASS"
-                          ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
-                          : "bg-rose-500/15 text-rose-400 border border-rose-500/30"
-                      }`}>
-                        {entry.gate_result === "PASS" ? "✓" : "✕"} {entry.gate_result}
-                      </span>
+                      <Badge tone={entry.gate_result === "PASS" ? "success" : "danger"}>
+                        {entry.gate_result === "PASS" ? <CheckCircle2 size={11} /> : <XCircle size={11} />}
+                        <span>{entry.gate_result}</span>
+                      </Badge>
                     )}
-                    <span className="text-[10px] text-zinc-600">
+                    <span className="text-[10px] text-zinc-500 font-mono">
                       {new Date(entry.timestamp).toLocaleTimeString()}
                     </span>
                   </div>
@@ -512,10 +534,10 @@ export default function Dashboard() {
 
                 {/* Detail Body */}
                 {entry.action === "TOPUP_LINK_GENERATED" ? (
-                  <div className="my-2 p-3.5 bg-amber-950/30 border border-amber-500/40 rounded-xl space-y-2">
-                    <div className="flex items-center gap-2 text-amber-300 font-bold text-xs">
-                      <span className="text-base">💳</span>
-                      <span>HUMAN-IN-THE-LOOP SHORTFALL TOP-UP REQUIRED</span>
+                  <div className="my-2 p-3.5 bg-amber-950/40 border border-amber-500/30 rounded-xl space-y-2">
+                    <div className="flex items-center gap-2 text-amber-300 font-semibold text-xs">
+                      <CreditCard size={15} />
+                      <span>Human-in-the-Loop Shortfall Top-Up Required</span>
                     </div>
                     <p className="text-zinc-300 text-xs leading-relaxed">
                       {entry.detail.split("Generated top-up payment link:")[0]}
@@ -526,30 +548,30 @@ export default function Dashboard() {
                           href={entry.detail.match(/https:\/\/rzp\.io\/[^\s]+/)?.[0] || "#"}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-zinc-950 font-bold text-xs shadow-md transition-all transform hover:scale-[1.02]"
+                          className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-zinc-950 font-semibold text-xs transition-colors"
                         >
-                          <span>⚡</span>
+                          <Zap size={14} />
                           <span>Open Razorpay Payment Link</span>
-                          <span className="text-[9px] bg-zinc-950/20 px-1.5 py-0.5 rounded font-mono">Test Mode</span>
+                          <span className="text-[10px] bg-zinc-950/20 px-1.5 py-0.5 rounded font-mono">Test Mode</span>
                         </a>
                       </div>
                     )}
                   </div>
                 ) : (
-                  <div className="text-zinc-400 text-xs leading-relaxed mb-2.5">
+                  <div className="text-zinc-300 text-xs leading-relaxed mb-2.5 font-mono">
                     {entry.detail}
                   </div>
                 )}
 
-                {/* Hash Footer */}
-                <div className="pt-2 border-t border-zinc-800/40 flex flex-wrap items-center justify-between text-[9px] text-zinc-600 gap-2">
+                {/* Hash Footer (Mono font strictly for hashes) */}
+                <div className="pt-2 border-t border-zinc-800/40 flex flex-wrap items-center justify-between text-[9px] text-zinc-500 gap-2 font-mono">
                   <div className="flex items-center gap-1 truncate max-w-[48%]">
-                    <span className="text-zinc-700">PREV:</span>
-                    <span className="font-mono text-zinc-500 truncate">{entry.prev_hash}</span>
+                    <span className="text-zinc-600">PREV:</span>
+                    <span className="truncate">{entry.prev_hash}</span>
                   </div>
                   <div className="flex items-center gap-1 truncate max-w-[48%]">
-                    <span className="text-zinc-700">HASH:</span>
-                    <span className="font-mono text-indigo-400/80 truncate">{entry.entry_hash}</span>
+                    <span className="text-zinc-600">HASH:</span>
+                    <span className="text-violet-400/90 truncate">{entry.entry_hash}</span>
                   </div>
                 </div>
               </div>
@@ -558,42 +580,36 @@ export default function Dashboard() {
         )}
         <div ref={ledgerEndRef} />
       </div>
-    </div>
+    </Panel>
   );
 
   return (
-    <main className="min-h-screen bg-[#050508] text-zinc-100 font-sans relative overflow-x-hidden">
+    <main className="min-h-screen bg-zinc-950 text-zinc-100 font-sans relative overflow-x-hidden">
 
-      {/* ──────────── STEP 5: AMBIENT BACKGROUND LAYER ──────────── */}
-      <div className="fixed inset-0 -z-10 bg-[#050508]">
-        <div 
-          className="absolute inset-0 opacity-[0.15]" 
-          style={{
-            backgroundImage: "linear-gradient(#1a1a2e 1px, transparent 1px), linear-gradient(90deg, #1a1a2e 1px, transparent 1px)", 
-            backgroundSize: "40px 40px"
-          }}
-        />
-        <div className="absolute top-0 left-1/3 w-[600px] h-[400px] bg-indigo-600/10 blur-[120px] rounded-full pointer-events-none" />
-        <div className="absolute bottom-0 right-0 w-[500px] h-[400px] bg-cyan-600/10 blur-[120px] rounded-full pointer-events-none" />
+      {/* ── BACKGROUND LAYER WITH DOT PATTERN ── */}
+      <div className="fixed inset-0 -z-10 bg-zinc-950">
+        <DotPattern className="opacity-15" />
+        <div className="absolute top-0 left-1/3 w-[600px] h-[400px] bg-violet-600/[0.07] blur-[120px] rounded-full pointer-events-none" />
+        <div className="absolute bottom-0 right-0 w-[500px] h-[400px] bg-cyan-600/[0.05] blur-[120px] rounded-full pointer-events-none" />
       </div>
 
-      {/* ──────────── STEP 3: FIXED LEFT SIDEBAR ──────────── */}
-      <aside className="fixed left-0 top-0 bottom-0 w-64 bg-[#0a0a0f] border-r border-gray-800 flex flex-col z-30 select-none">
-        {/* Sidebar Header / Brand */}
-        <div className="p-5 border-b border-gray-800/80 flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-black text-sm shadow-md shadow-indigo-500/30">
-            M
+      {/* ── SIDEBAR NAVIGATION ── */}
+      <aside className="fixed left-0 top-0 bottom-0 w-64 bg-zinc-950 border-r border-white/[0.06] flex flex-col z-30 select-none">
+        {/* Sidebar Brand */}
+        <div className="p-5 border-b border-white/[0.06] flex items-center gap-3">
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-500 to-indigo-600 flex items-center justify-center text-white font-bold text-sm shadow-sm shadow-violet-950/50">
+            <Hexagon size={18} className="text-white fill-white/20" />
           </div>
           <div>
-            <div className="text-sm font-black tracking-tight text-white flex items-center gap-1.5">
-              Mandate<span className="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">Mart</span>
+            <div className="text-sm font-semibold tracking-tight text-white flex items-center gap-1">
+              Mandate<span className="text-violet-400">Mart</span>
             </div>
-            <div className="text-[10px] text-zinc-500 font-mono tracking-wider">COMMAND CENTER</div>
+            <div className="text-[10px] text-zinc-500 tracking-wider">COMMAND CENTER</div>
           </div>
         </div>
 
-        {/* Sidebar Navigation */}
-        <nav className="flex-1 p-3 space-y-1.5 overflow-y-auto">
+        {/* Navigation Items */}
+        <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
           {[
             { id: "mission", label: "Mission Control", icon: Rocket },
             { id: "topology", label: "Protocol Map", icon: Network },
@@ -607,13 +623,13 @@ export default function Dashboard() {
               <button
                 key={id}
                 onClick={() => setActiveTab(id)}
-                className={`w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs transition-all duration-150 text-left ${
+                className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-xs transition-colors text-left cursor-pointer ${
                   isActive
-                    ? "bg-indigo-600/20 text-indigo-400 border-l-2 border-indigo-500 font-semibold shadow-inner"
-                    : "text-gray-400 hover:text-white hover:bg-zinc-900/60 border-l-2 border-transparent"
+                    ? "bg-violet-500/10 text-violet-300 border-l-2 border-violet-500 font-semibold"
+                    : "text-zinc-400 hover:text-zinc-200 hover:bg-zinc-900/60 border-l-2 border-transparent"
                 }`}
               >
-                <Icon size={18} className={isActive ? "text-indigo-400" : "text-gray-400"} />
+                <Icon size={16} className={isActive ? "text-violet-400" : "text-zinc-400"} />
                 <span>{label}</span>
               </button>
             );
@@ -621,260 +637,268 @@ export default function Dashboard() {
         </nav>
 
         {/* Sidebar Footer */}
-        <div className="p-4 border-t border-gray-800/80 flex items-center justify-between text-[10px] font-mono text-zinc-500">
-          <span>MANDATEMART v2.0 • TRACK 01</span>
-          <span className="flex items-center gap-1.5 text-emerald-400 font-bold">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+        <div className="p-4 border-t border-white/[0.06] flex items-center justify-between text-[11px] text-zinc-500">
+          <span>Track 01 • v2.0</span>
+          <span className="flex items-center gap-1.5 text-emerald-400 font-medium">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
             LIVE
           </span>
         </div>
       </aside>
 
-      {/* ──────────── MAIN CONTENT WRAPPER ──────────── */}
+      {/* ── MAIN CONTENT CONTAINER ── */}
       <div className="pl-64 min-h-screen flex flex-col">
-        <div className="p-4 md:p-8 flex-1 max-w-7xl w-full mx-auto">
-
-          {/* STEP 6: Global Foreign Agent Detected Alert Banner */}
-          {foreignAgentDetected && (
-            <div className="w-full bg-amber-500/20 border border-amber-500 rounded-xl p-4 mb-6 animate-pulse shadow-lg shadow-amber-500/10">
-              <div className="flex items-center gap-3">
-                <span className="text-3xl">⚠️</span>
-                <div>
-                  <div className="text-amber-400 font-bold text-base md:text-lg">FOREIGN AGENT DETECTED</div>
-                  <div className="text-amber-300 text-xs md:text-sm font-mono">
-                    External AI buyer transacting via A2A Commerce Manifest — No UI involved
-                  </div>
+        
+        {/* ── STICKY TOP HEADER CHROME ── */}
+        <header className="sticky top-0 z-40 backdrop-blur-xl bg-zinc-950/70 border-b border-white/[0.06] px-6 py-3.5">
+          <div className="max-w-7xl mx-auto flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center text-white shadow-sm">
+                <Hexagon size={16} className="text-white fill-white/20" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-sm font-semibold text-white tracking-tight">
+                    Mandate<span className="text-violet-400">Mart</span>
+                  </h1>
+                  <Badge tone="info">v2.0 Merkle</Badge>
                 </div>
+                <p className="text-[11px] text-zinc-400">
+                  Delegated financial authority on Razorpay rails
+                </p>
               </div>
             </div>
-          )}
 
-          {/* ──────────── SECTION E: GLOBAL TOP HEADER ──────────── */}
-          <header className="w-full mb-6 pb-6 border-b border-zinc-800/60 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5 animate-fade-in-up">
-            <div>
-              <div className="flex items-center gap-3 flex-wrap">
-                <span className="px-2.5 py-1 text-[10px] font-bold rounded-md bg-indigo-500/15 text-indigo-400 border border-indigo-500/25 tracking-wider uppercase">
-                  Track 01 — AI Growth & Agentic Commerce
-                </span>
-                <span className="px-2 py-0.5 text-[10px] font-mono rounded bg-zinc-800/80 text-zinc-500 border border-zinc-700/50">
-                  v2.0 Merkle
-                </span>
-              </div>
-              <h1 className="text-3xl md:text-4xl font-black tracking-tight text-white mt-2">
-                Mandate<span className="bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">Mart</span>
-              </h1>
-              <p className="text-zinc-500 text-sm mt-1.5 max-w-2xl leading-relaxed">
-                Delegated Spend Agents with <span className="text-zinc-300 font-medium">Double-Gated Spending</span>,{" "}
-                <span className="text-zinc-300 font-medium">ZOPA Multi-Agent Negotiation</span>, and a{" "}
-                <span className="text-zinc-300 font-medium">Cryptographic SHA-256 Merkle Ledger</span> on real Razorpay rails.
-              </p>
-            </div>
-
-            {/* Live Badges & Master Controls */}
+            {/* Header Control Buttons */}
             <div className="flex flex-wrap items-center gap-2">
               {/* KILL SWITCH */}
-              <button
+              <Button
+                variant="danger"
+                size="sm"
                 onClick={triggerKillSwitch}
                 disabled={killSwitchActive}
-                className={`group px-3.5 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all duration-300 shadow-lg flex items-center gap-2 ${
-                  killSwitchActive
-                    ? "bg-rose-950/80 border border-rose-500/60 text-rose-300 cursor-not-allowed"
-                    : "bg-gradient-to-r from-rose-600 to-rose-700 hover:from-rose-500 hover:to-rose-600 text-white shadow-rose-900/40 hover:shadow-rose-800/50 hover:scale-[1.02]"
-                }`}
+                className={killSwitchActive ? "opacity-60 cursor-not-allowed" : ""}
               >
-                <span className={`text-sm ${!killSwitchActive ? "animate-pulse" : ""}`}>🚨</span>
-                <span>{killSwitchActive ? "PASSPORT REVOKED" : "KILL SWITCH"}</span>
-              </button>
+                <Siren size={14} className={!killSwitchActive ? "animate-pulse" : ""} />
+                <span>{killSwitchActive ? "Passport Revoked" : "Kill Switch"}</span>
+              </Button>
 
               {/* WAR ROOM */}
-              <button
-                onClick={() => setShowWarRoom(true)}
-                className="group px-3.5 py-2 rounded-xl bg-zinc-900/80 border border-emerald-500/30 text-emerald-400 hover:bg-emerald-950/50 hover:border-emerald-500/50 text-xs font-mono font-bold flex items-center gap-2 transition-all duration-200 hover:scale-[1.02]"
-              >
-                <span>👁️</span>
+              <Button variant="outline" size="sm" onClick={() => setShowWarRoom(true)}>
+                <TerminalSquare size={14} />
                 <span>War Room</span>
-              </button>
+              </Button>
 
               {/* A2A MANIFEST */}
               <a
                 href="http://localhost:8000/.well-known/agent.json"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-zinc-900/80 border border-zinc-700/50 text-xs font-mono text-zinc-400 hover:text-indigo-400 hover:border-indigo-500/40 transition-all duration-200"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-700/80 bg-zinc-900/60 px-3 h-8 text-xs font-medium text-zinc-300 hover:text-white hover:bg-zinc-800 transition-colors"
               >
-                <span className="text-[10px]">🤖</span>
+                <Bot size={14} />
                 <span>A2A Manifest</span>
               </a>
 
               {/* REVENUE RESCUE */}
-              <button
-                onClick={() => setShowRevenue(true)}
-                className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-mono font-bold transition-all duration-200 hover:scale-[1.02] shadow-md shadow-emerald-950/40 border border-emerald-400/30"
-              >
-                <span>📈</span>
+              <Button variant="success" size="sm" onClick={() => setShowRevenue(true)}>
+                <TrendingUp size={14} />
                 <span>Revenue Rescue</span>
-              </button>
+              </Button>
 
-              {/* RAZORPAY BADGE */}
-              <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-zinc-900/60 border border-zinc-800/60 text-xs">
-                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="font-mono text-zinc-400">Razorpay Test Rails</span>
-              </div>
+              {/* RAZORPAY TEST RAILS */}
+              <Badge tone="neutral">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span>Razorpay Test Rails</span>
+              </Badge>
 
-              {/* CHAIN STATUS */}
-              <div className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-mono font-medium transition-all ${
-                verifyStatus?.is_valid 
-                  ? "bg-emerald-950/30 border-emerald-500/30 text-emerald-400"
-                  : "bg-red-950/50 border-red-500/60 text-red-300 animate-pulse"
-              }`}>
-                <div className={`w-2 h-2 rounded-full ${verifyStatus?.is_valid ? "bg-emerald-400" : "bg-red-400"}`} />
-                {verifyStatus?.is_valid 
-                  ? `CHAIN VALID (${verifyStatus.total_entries} BLOCKS)`
-                  : `TAMPER DETECTED (BLOCK #${verifyStatus?.broken_at_seq})`
-                }
-              </div>
+              {/* CHAIN VALIDITY BADGE */}
+              {verifyStatus?.is_valid ? (
+                <Badge tone="success">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                  <span>Chain Valid ({verifyStatus.total_entries})</span>
+                </Badge>
+              ) : (
+                <Badge tone="danger">
+                  <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-ping" />
+                  <span>Tamper Detected</span>
+                </Badge>
+              )}
 
               {/* RESET */}
-              <button
-                onClick={resetAll}
-                className="px-3 py-2 rounded-xl bg-zinc-900/60 border border-zinc-800/60 text-xs font-medium text-zinc-500 hover:text-white hover:border-zinc-600 transition-all duration-200"
-              >
-                Reset
-              </button>
+              <Button variant="ghost" size="sm" onClick={resetAll}>
+                <RefreshCw size={13} />
+                <span>Reset</span>
+              </Button>
             </div>
-          </header>
+          </div>
+        </header>
+
+        {/* Main Content Area */}
+        <div className="p-6 md:p-8 flex-1 max-w-7xl w-full mx-auto">
+
+          {/* Foreign Agent Detected Alert */}
+          {foreignAgentDetected && (
+            <Panel className="border-amber-500/40 bg-amber-950/20 p-4 mb-6">
+              <div className="flex items-center gap-3">
+                <AlertTriangle size={24} className="text-amber-400 shrink-0 animate-pulse" />
+                <div>
+                  <div className="text-amber-300 font-semibold text-sm">Foreign Agent Detected</div>
+                  <div className="text-amber-400/80 text-xs font-mono">
+                    External AI buyer transacting via A2A Commerce Manifest (Direct API)
+                  </div>
+                </div>
+              </div>
+            </Panel>
+          )}
 
           {/* Emergency Kill Switch Banner */}
           {killSwitchActive && (
-            <div className="w-full mb-5 p-4 bg-rose-950/70 border-2 border-rose-500/60 rounded-2xl text-rose-200 text-xs font-mono flex items-center justify-between shadow-2xl shadow-rose-950/30 animate-fade-in">
-              <div className="flex items-center gap-3">
-                <span className="text-2xl animate-pulse">🚨</span>
-                <div>
-                  <strong className="font-bold text-white uppercase tracking-wide">HUMAN KILL SWITCH ENGAGED</strong>
-                  <span className="ml-2 text-rose-300/90">
-                    Active Ed25519 agent passport has been revoked. All incoming agent transactions will be rejected by the Double Gate.
-                  </span>
+            <Panel className="border-rose-500/50 bg-rose-950/40 p-4 mb-6">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <Siren size={22} className="text-rose-400 shrink-0 animate-pulse" />
+                  <div>
+                    <strong className="font-semibold text-white text-sm">Human Kill Switch Engaged</strong>
+                    <p className="text-rose-300 text-xs mt-0.5">
+                      Active Ed25519 agent passport has been revoked. All incoming agent transactions are blocked at the Double Gate.
+                    </p>
+                  </div>
                 </div>
+                <Button variant="outline" size="sm" onClick={() => setKillSwitchActive(false)}>
+                  Dismiss
+                </Button>
               </div>
-              <button
-                onClick={() => setKillSwitchActive(false)}
-                className="shrink-0 px-3 py-1.5 rounded-lg bg-zinc-900/80 border border-zinc-700 text-zinc-200 hover:text-white text-xs font-bold transition"
-              >
-                Dismiss
-              </button>
-            </div>
+            </Panel>
           )}
 
-          {/* ──────────── STEP 4: CONDITIONAL RENDERING WRAPPED IN FRAMER MOTION ──────────── */}
+          {/* ── CONDITIONAL VIEWS WITH FRAMER MOTION ── */}
           <AnimatePresence mode="wait">
             <motion.div
               key={activeTab}
-              initial={{ opacity: 0, y: 12 }}
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -12 }}
-              transition={{ duration: 0.25 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.2 }}
               className="w-full"
             >
-              {/* ══════════════ TAB 1: MISSION CONTROL (SECTION A) ══════════════ */}
+              {/* ══════════════ TAB 1: MISSION CONTROL ══════════════ */}
               {activeTab === "mission" && (
                 <div className="space-y-6">
-                  {/* Persona Bar */}
-                  <div className="w-full flex flex-wrap items-center justify-between gap-4 p-3.5 glass-card animate-fade-in-up delay-75">
-                    <div className="flex items-center gap-3">
-                      <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Persona</span>
-                      <div className="flex gap-1 bg-zinc-950/80 p-1 rounded-lg border border-zinc-800/60">
-                        <button
-                          onClick={() => selectPersona("personal")}
-                          className={`px-3.5 py-1.5 text-xs font-medium rounded-md transition-all duration-200 ${
-                            persona === "personal"
-                              ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20"
-                              : "text-zinc-400 hover:text-white"
-                          }`}
-                        >
-                          🧑 Personal Shopper
-                        </button>
-                        <button
-                          onClick={() => selectPersona("corporate")}
-                          className={`px-3.5 py-1.5 text-xs font-medium rounded-md transition-all duration-200 ${
-                            persona === "corporate"
-                              ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20"
-                              : "text-zinc-400 hover:text-white"
-                          }`}
-                        >
-                          🏢 Corporate IT
-                        </button>
+
+                  {/* Hero Header Area with BorderBeam */}
+                  <Panel className="relative p-6 overflow-hidden">
+                    <BorderBeam duration={10} colorFrom="#8b5cf6" colorTo="#06b6d4" />
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div>
+                        <div className="text-[11px] font-semibold text-violet-400 tracking-wider uppercase mb-1">
+                          Delegated Financial Authority
+                        </div>
+                        <h2 className="text-xl md:text-2xl font-bold text-white tracking-tight">
+                          Autonomous AI Shopping with Cryptographic Guardrails
+                        </h2>
+                        <p className="text-zinc-400 text-xs mt-1 max-w-2xl leading-relaxed">
+                          Issue natural-language spend mandates with hard financial ceilings. Agents negotiate within bilateral ZOPA, pass deterministic Double Gates, and settle on Razorpay rails.
+                        </p>
+                      </div>
+
+                      {/* Action Bar */}
+                      <div className="flex items-center gap-2 self-start sm:self-auto shrink-0">
+                        {mandate && (
+                          <Button variant="primary" size="sm" onClick={openPassport}>
+                            <ShieldCheck size={14} />
+                            <span>Passport</span>
+                          </Button>
+                        )}
+                        {receipt && (
+                          <Button variant="outline" size="sm" onClick={() => setShowReceipt(true)}>
+                            <ScrollText size={14} />
+                            <span>Audit Summary</span>
+                          </Button>
+                        )}
                       </div>
                     </div>
+                  </Panel>
 
-                    <div className="flex items-center gap-2.5">
-                      {mandate && (
-                        <button
-                          onClick={openPassport}
-                          className="group px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600/30 to-purple-600/30 hover:from-indigo-600/50 hover:to-purple-600/50 border border-indigo-400/40 text-indigo-200 text-xs font-bold flex items-center gap-2 transition-all duration-200 shadow hover:shadow-lg hover:shadow-indigo-500/10 hover:scale-[1.02]"
-                        >
-                          <span>🛡️</span>
-                          <span>Transaction Passport</span>
-                        </button>
-                      )}
+                  {/* Persona Bar */}
+                  <Panel className="p-3.5">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs font-medium text-zinc-400">Persona:</span>
+                        <div className="flex gap-1 bg-zinc-950/80 p-1 rounded-lg border border-white/[0.04]">
+                          <Button
+                            variant={persona === "personal" ? "primary" : "ghost"}
+                            size="sm"
+                            onClick={() => selectPersona("personal")}
+                            className="text-xs h-7 px-3"
+                          >
+                            <User size={13} />
+                            <span>Personal Shopper</span>
+                          </Button>
+                          <Button
+                            variant={persona === "corporate" ? "primary" : "ghost"}
+                            size="sm"
+                            onClick={() => selectPersona("corporate")}
+                            className="text-xs h-7 px-3"
+                          >
+                            <Building2 size={13} />
+                            <span>Corporate IT</span>
+                          </Button>
+                        </div>
+                      </div>
 
-                      {receipt && (
-                        <button
-                          onClick={() => setShowReceipt(true)}
-                          className="px-4 py-2 rounded-xl bg-zinc-900/80 hover:bg-zinc-800 border border-zinc-700/60 text-zinc-300 text-xs font-bold flex items-center gap-2 transition-all duration-200"
-                        >
-                          <span>📄</span>
-                          <span>Audit Summary</span>
-                        </button>
-                      )}
+                      <div className="text-xs text-zinc-500 flex items-center gap-2">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                        <span>Ed25519 Delegation Active</span>
+                      </div>
                     </div>
-                  </div>
+                  </Panel>
 
-                  {/* Main Mission Grid */}
+                  {/* Two-Column Mission Grid */}
                   <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                     
-                    {/* ═══ LEFT COLUMN (5 cols) ═══ */}
-                    <div className="lg:col-span-5 space-y-5">
+                    {/* ── LEFT COLUMN (5 cols) ── */}
+                    <div className="lg:col-span-5 space-y-6">
                       
                       {/* Preset Scenario Selector */}
-                      <div className="glass-card p-5 shadow-xl animate-fade-in-up delay-150">
-                        <h3 className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mb-3 flex items-center justify-between">
-                          <span>Demo Scenarios</span>
-                          <span className="text-indigo-400 font-mono">1-Click Presets</span>
-                        </h3>
+                      <Panel className="p-5">
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="text-xs font-semibold text-zinc-200">Demo Scenarios</span>
+                          <span className="text-xs text-violet-400">1-Click Presets</span>
+                        </div>
                         <div className="grid grid-cols-3 gap-2">
                           {[
-                            { key: "standard" as const, label: "Happy Path", sub: "ZOPA + Double Gate", color: "indigo" },
-                            { key: "budget_fail" as const, label: "Budget Fail", sub: "Gate Blocks & Recovers", color: "amber" },
-                            { key: "semantic_fail" as const, label: "Semantic Fail", sub: "Intent Mismatch Block", color: "purple" },
+                            { key: "standard" as const, label: "Happy Path", sub: "ZOPA + Gate Pass" },
+                            { key: "budget_fail" as const, label: "Budget Fail", sub: "Gate Blocks & Leash" },
+                            { key: "semantic_fail" as const, label: "Semantic Fail", sub: "Intent Mismatch" },
                           ].map(s => (
                             <button
                               key={s.key}
                               onClick={() => selectScenario(s.key)}
-                              className={`p-3 rounded-xl border text-left text-xs transition-all duration-200 ${
+                              className={`p-3 rounded-xl border text-left transition-all cursor-pointer ${
                                 selectedScenario === s.key
-                                  ? `bg-${s.color}-600/15 border-${s.color}-500/60 text-white font-semibold ring-1 ring-${s.color}-500/20`
-                                  : "bg-zinc-950/50 border-zinc-800/60 text-zinc-500 hover:border-zinc-700 hover:text-zinc-300"
+                                  ? "bg-violet-600/15 border-violet-500/50 text-white font-medium ring-1 ring-violet-500/40"
+                                  : "bg-zinc-950/60 border-zinc-800 text-zinc-400 hover:border-zinc-700 hover:text-zinc-200"
                               }`}
                             >
-                              <div className="font-bold text-[11px]">{s.label}</div>
-                              <div className="text-[9px] text-zinc-500 mt-1 truncate">{s.sub}</div>
+                              <div className="font-semibold text-xs">{s.label}</div>
+                              <div className="text-[10px] text-zinc-500 mt-0.5 truncate">{s.sub}</div>
                             </button>
                           ))}
                         </div>
-                      </div>
+                      </Panel>
 
                       {/* Mandate Authorization Card */}
-                      <div className="glass-card p-6 shadow-xl space-y-4 animate-fade-in-up delay-200">
-                        <div className="flex items-center justify-between">
-                          <h2 className="text-base font-bold text-white flex items-center gap-2.5">
-                            <span className="w-6 h-6 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-600 text-white text-[10px] flex items-center justify-center font-mono shadow-md shadow-indigo-500/20">1</span>
-                            Human Mandate Leash
-                          </h2>
-                          <span className="text-[10px] font-mono text-zinc-600 px-2 py-0.5 rounded bg-zinc-900 border border-zinc-800">Ed25519 Signed</span>
-                        </div>
+                      <Panel className="p-6 space-y-4">
+                        <PanelHeader
+                          icon={<Lock size={16} />}
+                          title="Human Mandate Leash"
+                          meta={<Badge tone="neutral">Ed25519 Signed</Badge>}
+                          className="p-0 pb-4 border-b border-white/[0.06]"
+                        />
 
                         <div>
-                          <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">
+                          <label className="block text-xs font-medium text-zinc-300 mb-1.5">
                             Natural-Language Intent
                           </label>
                           <div className="flex items-start gap-2">
@@ -882,165 +906,178 @@ export default function Dashboard() {
                               value={intentText}
                               onChange={(e) => setIntentText(e.target.value)}
                               rows={2}
-                              className="w-full bg-zinc-950/80 border border-zinc-800/60 rounded-xl p-3 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 outline-none transition-all text-zinc-100 resize-none"
+                              className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-xs focus:border-violet-500 focus:ring-1 focus:ring-violet-500/40 outline-none transition-all text-zinc-100 resize-none font-sans"
                             />
-                            <button
-                              type="button"
+                            <Button
+                              variant={isListening ? "danger" : "outline"}
+                              size="sm"
                               onClick={startVoiceInput}
                               disabled={isListening}
-                              className={`shrink-0 px-3.5 py-3 rounded-xl font-bold text-xs text-white transition-all flex items-center gap-1.5 shadow-md ${
-                                isListening
-                                  ? "bg-red-600 animate-pulse shadow-lg shadow-red-500/50 border border-red-400"
-                                  : "bg-indigo-600 hover:bg-indigo-500 border border-indigo-500/40"
-                              }`}
+                              className="shrink-0 h-[68px] px-3.5 flex-col gap-1"
                               title="Speak your mandate intent"
                             >
-                              {isListening ? "🔴 Listening..." : "🎙️ Speak"}
-                            </button>
+                              <Mic size={16} className={isListening ? "animate-pulse" : ""} />
+                              <span className="text-[10px]">{isListening ? "Listening" : "Speak"}</span>
+                            </Button>
                           </div>
                           {isListening && (
-                            <div className="mt-2 text-red-400 text-xs font-mono animate-pulse flex items-center gap-1.5">
-                              <span className="inline-block w-2 h-2 rounded-full bg-red-500 animate-ping" />
-                              ● Recording voice input... speak your mandate now
+                            <div className="mt-2 text-rose-400 text-xs flex items-center gap-1.5 animate-pulse">
+                              <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping" />
+                              Recording voice input... speak your mandate now
                             </div>
                           )}
                         </div>
 
                         <div>
-                          <label className="block text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-1.5">
+                          <label className="block text-xs font-medium text-zinc-300 mb-1.5">
                             Spend Limit Hard Cap (₹)
                           </label>
                           <input
                             type="number"
                             value={maxAmount}
                             onChange={(e) => setMaxAmount(Number(e.target.value))}
-                            className="w-full bg-zinc-950/80 border border-zinc-800/60 rounded-xl p-3 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 outline-none transition-all text-zinc-100 font-mono"
+                            className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-xs focus:border-violet-500 focus:ring-1 focus:ring-violet-500/40 outline-none transition-all text-zinc-100 font-mono"
                           />
                         </div>
 
-                        <button
+                        <Button
+                          variant="primary"
+                          size="md"
                           onClick={issueMandate}
                           disabled={loadingMandate}
-                          className="w-full py-3 px-4 bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-400 hover:to-indigo-500 text-white font-semibold rounded-xl transition-all shadow-lg shadow-indigo-500/15 disabled:opacity-50 text-sm hover:scale-[1.01] active:scale-[0.99]"
+                          className="w-full relative overflow-hidden"
                         >
-                          {loadingMandate ? "Signing & Authorizing..." : "🔏 Authorize Spend Mandate"}
-                        </button>
+                          <Lock size={15} />
+                          <span>{loadingMandate ? "Signing & Authorizing..." : "Authorize Spend Mandate"}</span>
+                        </Button>
 
                         {mandate && (
-                          <div className="p-4 bg-zinc-950/60 border border-zinc-800/50 rounded-xl space-y-2.5 font-mono text-xs animate-fade-in">
+                          <div className="p-4 bg-zinc-950/70 border border-white/[0.04] rounded-xl space-y-2.5 text-xs">
                             <div className="flex justify-between text-zinc-400">
                               <span>Mandate ID:</span>
-                              <span className="text-indigo-400 font-bold">{mandate.mandate_id}</span>
+                              <span className="text-violet-400 font-mono font-medium">{mandate.mandate_id}</span>
                             </div>
                             <div className="flex justify-between text-zinc-400">
                               <span>UPI Autopay Token:</span>
-                              <span className="text-zinc-300 truncate max-w-[140px]">{mandate.razorpay_token_id || "tok_autopay_mock"}</span>
+                              <span className="text-zinc-300 font-mono truncate max-w-[140px]">
+                                {mandate.razorpay_token_id || "tok_autopay_mock"}
+                              </span>
                             </div>
                             <div className="flex justify-between text-zinc-400">
                               <span>Spend Budget:</span>
-                              <span className="text-white font-bold">₹{mandate.spent_amount} / ₹{mandate.max_amount}</span>
+                              <span className="text-white font-mono font-semibold">
+                                <NumberTicker value={mandate.spent_amount} currency /> / ₹{mandate.max_amount.toLocaleString("en-IN")}
+                              </span>
                             </div>
 
                             {/* Progress bar */}
-                            <div className="w-full bg-zinc-900/80 rounded-full h-2 overflow-hidden">
+                            <div className="w-full bg-zinc-900 rounded-full h-2 overflow-hidden">
                               <div 
                                 className="h-full transition-all duration-700 ease-out rounded-full"
                                 style={{ 
                                   width: `${spendPct}%`,
                                   background: spendPct > 80 
-                                    ? "linear-gradient(90deg, #ef4444, #f97316)" 
-                                    : "linear-gradient(90deg, #6366f1, #8b5cf6)"
+                                    ? "linear-gradient(90deg, #f43f5e, #f97316)" 
+                                    : "linear-gradient(90deg, #8b5cf6, #06b6d4)"
                                 }}
                               />
                             </div>
 
                             {/* Top Up Button */}
-                            <div className="pt-2 border-t border-zinc-800/50 flex items-center justify-between">
-                              <span className="text-[10px] text-zinc-600">Need more spend limit?</span>
-                              <button
+                            <div className="pt-2 border-t border-zinc-800/60 flex items-center justify-between">
+                              <span className="text-[11px] text-zinc-500">Need more limit?</span>
+                              <Button
+                                variant="outline"
+                                size="sm"
                                 onClick={handleTopUp}
                                 disabled={topupLoading}
-                                className="px-3 py-1.5 rounded-lg bg-indigo-950/50 hover:bg-indigo-900/60 border border-indigo-800/50 text-indigo-300 text-[11px] font-bold transition-all flex items-center gap-1.5"
+                                className="h-7 text-xs"
                               >
-                                {topupLoading ? "Topping up..." : "+₹1,500 Top-Up"}
-                              </button>
+                                <Zap size={12} />
+                                <span>{topupLoading ? "Topping up..." : "+₹1,500 Top-Up"}</span>
+                              </Button>
                             </div>
                           </div>
                         )}
-                      </div>
+                      </Panel>
 
                       {/* Agent Action Box */}
-                      <div className="glass-card p-6 shadow-xl space-y-4 animate-fade-in-up delay-300">
-                        <div className="flex items-center justify-between">
-                          <h2 className="text-base font-bold text-white flex items-center gap-2.5">
-                            <span className="w-6 h-6 rounded-full bg-gradient-to-br from-indigo-500 to-indigo-600 text-white text-[10px] flex items-center justify-center font-mono shadow-md shadow-indigo-500/20">2</span>
-                            Autonomous Agent Execution
-                          </h2>
-                          {loadingAgent && (
-                            <span className="text-xs font-mono text-indigo-400 flex items-center gap-1.5 animate-pulse">
-                              <span className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
-                              Haggling...
-                            </span>
-                          )}
-                        </div>
+                      <Panel className="p-6 space-y-4">
+                        <PanelHeader
+                          icon={<Bot size={16} />}
+                          title="Autonomous Agent Execution"
+                          meta={
+                            loadingAgent ? (
+                              <Badge tone="info">
+                                <Loader2 size={11} className="animate-spin" />
+                                <span>Haggling...</span>
+                              </Badge>
+                            ) : undefined
+                          }
+                          className="p-0 pb-4 border-b border-white/[0.06]"
+                        />
 
-                        <p className="text-[11px] text-zinc-500 leading-relaxed">
-                          Buyer Agent queries the merchant catalog, autonomously bargains with the Merchant Pricing Agent within ZOPA, and passes the cart through the Double Gate before drawing from Razorpay test rails.
+                        <p className="text-xs text-zinc-400 leading-relaxed">
+                          Buyer Agent inspects merchant inventory, initiates bilateral ZOPA bargaining with Merchant Agent, and verifies cart against the Double Gate before drawing funds on Razorpay rails.
                         </p>
 
-                        <button
+                        <Button
+                          variant="primary"
+                          size="md"
                           onClick={triggerAgent}
                           disabled={!mandate || loadingAgent}
-                          className="w-full py-3.5 px-4 bg-white text-zinc-950 hover:bg-zinc-100 font-bold rounded-xl transition-all shadow-lg shadow-white/5 disabled:opacity-30 disabled:cursor-not-allowed flex items-center justify-center gap-2 text-sm hover:scale-[1.01] active:scale-[0.99]"
+                          className="w-full"
                         >
                           {loadingAgent ? (
                             <>
-                              <svg className="animate-spin h-4 w-4 text-zinc-950" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                              </svg>
-                              Autonomous Haggling in Progress...
+                              <Loader2 size={16} className="animate-spin" />
+                              <span>Autonomous Haggling in Progress...</span>
                             </>
                           ) : (
-                            "⚡ Launch Autonomous Agent Haggling"
+                            <>
+                              <Zap size={15} />
+                              <span>Launch Autonomous Agent Haggling</span>
+                            </>
                           )}
-                        </button>
-                      </div>
+                        </Button>
+                      </Panel>
 
                       {/* Post-Purchase Upsell Card */}
                       {upsellItem && (
-                        <div className="p-4 bg-gradient-to-r from-purple-950/30 to-zinc-900/50 border border-purple-500/30 rounded-2xl space-y-2 animate-fade-in glass-card">
+                        <Panel className="p-4 border-violet-500/30 bg-violet-950/20 space-y-2">
                           <div className="flex items-center justify-between">
-                            <span className="px-2.5 py-0.5 rounded-md bg-purple-500/15 text-purple-300 text-[10px] font-bold uppercase tracking-wider">
-                              Post-Purchase Upsell Hook
+                            <Badge tone="info">Post-Purchase Upsell Hook</Badge>
+                            <span className="text-[11px] font-mono text-zinc-400">
+                              Remaining: ₹{upsellItem.remaining_budget.toLocaleString("en-IN")}
                             </span>
-                            <span className="text-[10px] font-mono text-zinc-500">Remaining Leash: ₹{upsellItem.remaining_budget}</span>
                           </div>
-                          <h4 className="text-sm font-bold text-white">{upsellItem.item.name}</h4>
+                          <h4 className="text-xs font-semibold text-white">{upsellItem.item.name}</h4>
                           <p className="text-[11px] text-zinc-400">{upsellItem.item.description}</p>
                           <div className="flex items-center justify-between pt-1">
-                            <span className="text-sm font-bold text-emerald-400 font-mono">₹{upsellItem.item.price}</span>
-                            <span className="text-[10px] text-zinc-600">Logged to Audit Chain</span>
+                            <span className="text-xs font-bold text-emerald-400 font-mono">
+                              ₹{upsellItem.item.price.toLocaleString("en-IN")}
+                            </span>
+                            <span className="text-[10px] text-zinc-500">Logged to Merkle Chain</span>
                           </div>
-                        </div>
+                        </Panel>
                       )}
 
-                      {/* Razorpay Webhook Settlement Simulator Block */}
+                      {/* Razorpay Webhook Settlement Simulator */}
                       {settlementStatus === "pending" && (
-                        <div className="bg-amber-950/30 border border-amber-500/40 rounded-2xl p-5 space-y-3 shadow-lg shadow-amber-950/20 animate-fade-in glass-card">
+                        <Panel className="p-5 border-amber-500/30 bg-amber-950/20 space-y-3">
                           <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <span className="text-base">⏳</span>
-                              <span className="text-amber-400 font-bold text-xs font-mono uppercase tracking-wider">PENDING SETTLEMENT</span>
+                            <div className="flex items-center gap-2 text-amber-300 font-semibold text-xs">
+                              <Loader2 size={14} className="animate-spin text-amber-400" />
+                              <span>Pending Settlement</span>
                             </div>
-                            <span className="text-[10px] font-mono text-amber-300/80 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
-                              Awaiting Webhook
-                            </span>
+                            <Badge tone="warn">Awaiting Webhook</Badge>
                           </div>
-                          <div className="text-zinc-400 text-xs leading-relaxed">
-                            Razorpay test order executed. Awaiting asynchronous webhook confirmation for cryptographic settlement into Merkle Ledger.
-                          </div>
-                          <button
+                          <p className="text-zinc-400 text-xs leading-relaxed">
+                            Razorpay test order authorized. Simulating asynchronous webhook delivery for cryptographic settlement into Merkle Ledger.
+                          </p>
+                          <Button
+                            variant="outline"
+                            size="md"
                             onClick={async () => {
                               try {
                                 const mId = mandate?.mandate_id || "demo_mandate";
@@ -1054,76 +1091,67 @@ export default function Dashboard() {
                                 }
                               } catch (e) { console.error(e); }
                             }}
-                            className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-zinc-950 font-bold px-4 py-2.5 rounded-xl transition-all shadow-md shadow-amber-950/50 text-xs flex items-center justify-center gap-2"
+                            className="w-full text-amber-300 border-amber-500/30 hover:bg-amber-500/10"
                           >
-                            <span>🔔</span>
+                            <Bell size={14} />
                             <span>Deliver Razorpay Webhook (Simulate Settlement)</span>
-                          </button>
-                        </div>
+                          </Button>
+                        </Panel>
                       )}
 
                       {settlementStatus === "settled" && (
-                        <div className="bg-emerald-950/30 border border-emerald-500/40 rounded-2xl p-5 space-y-1.5 animate-pulse shadow-lg shadow-emerald-950/20 glass-card">
-                          <div className="flex items-center gap-2">
-                            <span className="text-base">✅</span>
-                            <span className="text-emerald-400 font-bold text-xs font-mono tracking-wider uppercase">CRYPTOGRAPHICALLY SETTLED</span>
+                        <Panel className="p-4 border-emerald-500/40 bg-emerald-950/20 space-y-1">
+                          <div className="flex items-center gap-2 text-emerald-400 font-semibold text-xs">
+                            <CheckCircle2 size={15} />
+                            <span>Cryptographically Settled</span>
                           </div>
-                          <div className="text-zinc-400 text-xs leading-relaxed">
-                            Razorpay webhook received, HMAC-SHA256 verified over HTTP, settlement recorded in Merkle Ledger.
-                          </div>
-                        </div>
+                          <p className="text-zinc-400 text-xs">
+                            Razorpay webhook verified with HMAC-SHA256 and permanently recorded on the Merkle Ledger.
+                          </p>
+                        </Panel>
                       )}
                     </div>
 
-                    {/* ═══ RIGHT COLUMN — STORYBOARD & SPLIT VIEW (7 cols) ═══ */}
+                    {/* ── RIGHT COLUMN: STORYBOARD & SPLIT VIEW (7 cols) ── */}
                     <div className="lg:col-span-7 flex flex-col space-y-4">
 
                       {/* Split View Tabs */}
-                      <div className="flex items-center justify-between bg-zinc-900/90 px-3 py-2 rounded-xl border border-zinc-800 shadow-md">
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
+                      <Panel className="p-2 flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                          <Button
+                            variant={rightPanelTab === "STORYBOARD" ? "primary" : "ghost"}
+                            size="sm"
                             onClick={() => setRightPanelTab("STORYBOARD")}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
-                              rightPanelTab === "STORYBOARD"
-                                ? "bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 shadow-sm"
-                                : "text-zinc-400 hover:text-zinc-200"
-                            }`}
+                            className="h-8 text-xs"
                           >
-                            <span>💬</span>
+                            <Bot size={13} />
                             <span>A2A Storyboard</span>
-                          </button>
-                          <button
-                            type="button"
+                          </Button>
+                          <Button
+                            variant={rightPanelTab === "SPLIT" ? "primary" : "ghost"}
+                            size="sm"
                             onClick={() => setRightPanelTab("SPLIT")}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
-                              rightPanelTab === "SPLIT"
-                                ? "bg-indigo-500/20 text-indigo-300 border border-indigo-500/40 shadow-sm"
-                                : "text-zinc-400 hover:text-zinc-200"
-                            }`}
+                            className="h-8 text-xs"
                           >
-                            <span>⚡</span>
+                            <Zap size={13} />
                             <span>Split View</span>
-                          </button>
-                          <button
-                            type="button"
+                          </Button>
+                          <Button
+                            variant={rightPanelTab === "LEDGER" ? "primary" : "ghost"}
+                            size="sm"
                             onClick={() => setRightPanelTab("LEDGER")}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
-                              rightPanelTab === "LEDGER"
-                                ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm"
-                                : "text-zinc-400 hover:text-zinc-200"
-                            }`}
+                            className="h-8 text-xs"
                           >
-                            <span>⛓️</span>
+                            <Link2 size={13} />
                             <span>Merkle Ledger</span>
-                          </button>
+                          </Button>
                         </div>
 
-                        <div className="text-[10px] font-mono text-zinc-500 hidden sm:flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                          <span>Autonomous A2A Protocol</span>
+                        <div className="text-[11px] text-zinc-500 hidden sm:flex items-center gap-1.5 pr-2">
+                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                          <span>Autonomous A2A Bus</span>
                         </div>
-                      </div>
+                      </Panel>
 
                       {/* Storyboard Component (visible in STORYBOARD and SPLIT tabs) */}
                       {(rightPanelTab === "STORYBOARD" || rightPanelTab === "SPLIT") && (
@@ -1148,16 +1176,16 @@ export default function Dashboard() {
                 </div>
               )}
 
-              {/* ══════════════ TAB 3: AUDIT LEDGER (SECTION C) ══════════════ */}
+              {/* ══════════════ TAB 3: AUDIT LEDGER ══════════════ */}
               {activeTab === "ledger" && (
-                <div className="max-w-7xl mx-auto space-y-5 animate-fade-in">
+                <div className="max-w-7xl mx-auto space-y-6 animate-fade-in">
                   {renderAuditLedger(true)}
                 </div>
               )}
 
-              {/* ══════════════ TAB 4: RED TEAM ARENA (SECTION D) ══════════════ */}
+              {/* ══════════════ TAB 4: RED TEAM ARENA ══════════════ */}
               {activeTab === "redteam" && (
-                <div className="max-w-7xl mx-auto space-y-5 animate-fade-in">
+                <div className="max-w-7xl mx-auto space-y-6 animate-fade-in">
                   <RedTeamArena />
                 </div>
               )}
@@ -1165,107 +1193,116 @@ export default function Dashboard() {
               {/* ══════════════ TAB 5: REVENUE RESCUE (ANALYTICS) ══════════════ */}
               {activeTab === "analytics" && (
                 <div className="max-w-7xl mx-auto space-y-6 animate-fade-in">
-                  <div className="glass-card p-8 rounded-2xl border border-emerald-500/30 bg-gradient-to-br from-emerald-950/20 via-zinc-900 to-zinc-950">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-zinc-800">
+                  <Panel className="p-8 border-emerald-500/30 bg-gradient-to-br from-emerald-950/20 via-zinc-900 to-zinc-950">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-white/[0.06]">
                       <div>
-                        <div className="flex items-center gap-2 text-emerald-400 text-xs font-mono font-bold uppercase tracking-wider mb-1">
-                          <BarChart3 size={16} /> Autonomous Commerce Analytics
+                        <div className="flex items-center gap-2 text-emerald-400 text-xs font-semibold uppercase tracking-wider mb-1">
+                          <TrendingUp size={15} />
+                          <span>Autonomous Commerce Analytics</span>
                         </div>
                         <h2 className="text-2xl font-bold text-white">Merchant Revenue Rescue Engine</h2>
                         <p className="text-zinc-400 text-xs mt-1">
-                          Real-time tracking of cart abandonment recovery via autonomous ZOPA haggling and UPI Autopay.
+                          Live tracking of cart abandonment recovery via bilateral ZOPA negotiation and UPI Autopay.
                         </p>
                       </div>
-                      <button
+                      <Button
+                        variant="success"
+                        size="md"
                         onClick={() => setShowRevenue(true)}
-                        className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs font-mono flex items-center gap-2 shadow-lg shadow-emerald-950/50 self-start sm:self-auto transition-transform hover:scale-[1.02]"
+                        className="self-start sm:self-auto"
                       >
-                        <span>📈</span>
-                        <span>Open Revenue Rescue Command Center</span>
-                      </button>
+                        <TrendingUp size={15} />
+                        <span>Open Full Command Center</span>
+                      </Button>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-                      <div className="p-5 rounded-xl bg-zinc-950/70 border border-zinc-800">
-                        <div className="text-xs font-mono text-zinc-500 uppercase">ZOPA Algorithmic Recovery</div>
-                        <div className="text-2xl font-mono font-bold text-emerald-400 mt-2">Bilateral Pricing</div>
-                        <div className="text-[11px] text-zinc-400 mt-1">Recovers price-sensitive buyers before dropoff</div>
+                      <div className="p-5 rounded-xl bg-zinc-950/80 border border-white/[0.04]">
+                        <div className="text-xs text-zinc-400">ZOPA Algorithmic Recovery</div>
+                        <div className="text-2xl font-mono font-bold text-emerald-400 mt-2">
+                          Bilateral Pricing
+                        </div>
+                        <div className="text-[11px] text-zinc-500 mt-1">Recovers price-sensitive buyers before dropoff</div>
                       </div>
-                      <div className="p-5 rounded-xl bg-zinc-950/70 border border-zinc-800">
-                        <div className="text-xs font-mono text-zinc-500 uppercase">Payment Link Rescue</div>
-                        <div className="text-2xl font-mono font-bold text-amber-400 mt-2">Human-in-the-Loop</div>
-                        <div className="text-[11px] text-zinc-400 mt-1">Instant shortfall payment links generated via Razorpay</div>
+                      <div className="p-5 rounded-xl bg-zinc-950/80 border border-white/[0.04]">
+                        <div className="text-xs text-zinc-400">Payment Link Rescue</div>
+                        <div className="text-2xl font-mono font-bold text-amber-400 mt-2">
+                          Human-in-the-Loop
+                        </div>
+                        <div className="text-[11px] text-zinc-500 mt-1">Instant shortfall payment links generated via Razorpay</div>
                       </div>
-                      <div className="p-5 rounded-xl bg-zinc-950/70 border border-zinc-800">
-                        <div className="text-xs font-mono text-zinc-500 uppercase">Fraud Prevention</div>
-                        <div className="text-2xl font-mono font-bold text-rose-400 mt-2">Double Gate Guard</div>
-                        <div className="text-[11px] text-zinc-400 mt-1">Deterministic spend leash & prompt injection blocks</div>
+                      <div className="p-5 rounded-xl bg-zinc-950/80 border border-white/[0.04]">
+                        <div className="text-xs text-zinc-400">Fraud Prevention</div>
+                        <div className="text-2xl font-mono font-bold text-rose-400 mt-2">
+                          Double Gate Guard
+                        </div>
+                        <div className="text-[11px] text-zinc-500 mt-1">Deterministic spend leash & prompt injection blocks</div>
                       </div>
                     </div>
-                  </div>
+                  </Panel>
                 </div>
               )}
 
-              {/* ══════════════ TAB 6: MERCHANT LIVE CATALOG (SECTION B) ══════════════ */}
+              {/* ══════════════ TAB 6: MERCHANT LIVE CATALOG ══════════════ */}
               {activeTab === "catalog" && (
-                <div className="max-w-7xl mx-auto space-y-5 animate-fade-in">
-                  <div className="glass-card p-6 shadow-xl flex items-center justify-between border-b border-zinc-800/50">
-                    <div>
-                      <h2 className="text-xl font-bold text-white flex items-center gap-2.5">
-                        <Store className="w-5 h-5 text-indigo-400" />
-                        <span>Merchant Live Catalog</span>
-                      </h2>
-                      <p className="text-xs text-zinc-500 font-mono mt-1">
-                        A2A-Compliant inventory exposed to autonomous buyer agents with bundle pricing rules.
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono font-bold">
-                        {catalog.length} Products Live
-                      </span>
-                      <button
-                        onClick={fetchCatalog}
-                        className="px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-700 text-xs text-zinc-300 hover:text-white font-mono transition-colors"
-                      >
-                        🔄 Refresh
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {catalog.map(item => (
-                      <div 
-                        key={item.product_id} 
-                        className="glass-card p-5 rounded-2xl border border-zinc-800/60 hover:border-indigo-500/40 transition-all duration-200 flex flex-col justify-between space-y-4"
-                      >
-                        <div className="space-y-2">
-                          <div className="flex items-start justify-between gap-2">
-                            <span className="font-bold text-white text-sm">{item.name}</span>
-                            <span className="shrink-0 px-2 py-0.5 rounded bg-zinc-800 text-[10px] text-indigo-400 uppercase font-mono font-bold">
-                              {item.category}
-                            </span>
-                          </div>
-                          <p className="text-zinc-400 text-xs leading-relaxed">{item.description}</p>
-                          {item.bundle_rules?.length > 0 && (
-                            <div className="p-2 rounded-lg bg-purple-950/30 border border-purple-800/40 text-[11px] text-purple-300 font-mono">
-                              🎁 Bundle Discount: {item.bundle_rules[0].discount_pct}% off ({item.bundle_rules[0].min_qty}+ units)
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="pt-3 border-t border-zinc-800/60 flex items-center justify-between">
-                          <div>
-                            <div className="text-[10px] font-mono text-zinc-500">RETAIL PRICE</div>
-                            <div className="font-mono font-black text-emerald-400 text-lg">₹{item.price.toLocaleString("en-IN")}</div>
-                          </div>
-                          <div className="text-right">
-                            <div className="text-[10px] font-mono text-zinc-500">IN STOCK</div>
-                            <div className="font-mono text-xs text-zinc-300 font-bold">{item.stock} units</div>
-                          </div>
-                        </div>
+                <div className="max-w-7xl mx-auto space-y-6 animate-fade-in">
+                  <Panel className="p-6">
+                    <div className="flex items-center justify-between pb-4 border-b border-white/[0.06]">
+                      <div>
+                        <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                          <Store size={18} className="text-violet-400" />
+                          <span>Merchant Live Catalog</span>
+                        </h2>
+                        <p className="text-xs text-zinc-400 mt-0.5">
+                          A2A-Compliant inventory exposed to autonomous buyer agents with bundle pricing rules.
+                        </p>
                       </div>
-                    ))}
-                  </div>
+                      <div className="flex items-center gap-2">
+                        <Badge tone="success">{catalog.length} Products Active</Badge>
+                        <Button variant="outline" size="sm" onClick={fetchCatalog}>
+                          <RefreshCw size={13} />
+                          <span>Refresh</span>
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
+                      {catalog.map(item => (
+                        <Panel 
+                          key={item.product_id} 
+                          className="p-5 flex flex-col justify-between space-y-4 hover:border-violet-500/40 transition-colors"
+                        >
+                          <div className="space-y-2">
+                            <div className="flex items-start justify-between gap-2">
+                              <span className="font-semibold text-white text-sm">{item.name}</span>
+                              <Badge tone="neutral" className="text-[10px]">
+                                {item.category}
+                              </Badge>
+                            </div>
+                            <p className="text-zinc-400 text-xs leading-relaxed">{item.description}</p>
+                            {item.bundle_rules?.length > 0 && (
+                              <div className="p-2 rounded-lg bg-violet-950/30 border border-violet-800/40 text-[11px] text-violet-300 font-mono">
+                                Bundle: {item.bundle_rules[0].discount_pct}% off on {item.bundle_rules[0].min_qty}+ units
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="pt-3 border-t border-white/[0.04] flex items-center justify-between">
+                            <div>
+                              <div className="text-[10px] text-zinc-500 uppercase">Retail Price</div>
+                              <div className="font-mono font-bold text-emerald-400 text-base">
+                                ₹{item.price.toLocaleString("en-IN")}
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-[10px] text-zinc-500 uppercase">In Stock</div>
+                              <div className="font-mono text-xs text-zinc-300 font-semibold">{item.stock} units</div>
+                            </div>
+                          </div>
+                        </Panel>
+                      ))}
+                    </div>
+                  </Panel>
                 </div>
               )}
             </motion.div>
@@ -1274,60 +1311,61 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* ──────────── STEP 6: MODALS (RENDERED OUTSIDE TAB CONDITIONALS) ──────────── */}
+      {/* ── MODALS (RENDERED OUTSIDE TAB CONDITIONALS) ── */}
 
       {/* Receipt Modal */}
       {showReceipt && receipt && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-zinc-900 border border-zinc-700/60 rounded-2xl max-w-lg w-full p-6 space-y-5 shadow-2xl relative">
-            <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
+          <Panel className="max-w-lg w-full p-6 space-y-5 shadow-2xl relative bg-zinc-900 border-zinc-700/60">
+            <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
               <div className="flex items-center gap-2">
-                <span className="text-xl">🧾</span>
-                <h3 className="font-bold text-white text-base">Multi-Agent Transaction Receipt</h3>
+                <ScrollText size={18} className="text-violet-400" />
+                <h3 className="font-semibold text-white text-sm">Multi-Agent Transaction Receipt</h3>
               </div>
-              <button 
-                onClick={() => setShowReceipt(false)}
-                className="text-zinc-400 hover:text-white text-sm px-2.5 py-1 rounded-lg bg-zinc-800 transition"
-              >
+              <Button variant="ghost" size="sm" onClick={() => setShowReceipt(false)} className="h-7 px-2">
                 ✕
-              </button>
+              </Button>
             </div>
 
-            <div className="space-y-3 font-mono text-xs">
-              <div className="p-3 bg-zinc-950/80 rounded-xl space-y-1.5 border border-zinc-800/60">
-                <div className="text-zinc-400">Mandate: <span className="text-indigo-400 font-bold">{receipt.mandate_id}</span></div>
-                <div className="text-zinc-400">Intent: <span className="text-zinc-200">{receipt.intent}</span></div>
+            <div className="space-y-3 text-xs font-mono">
+              <div className="p-3 bg-zinc-950/80 rounded-xl space-y-1.5 border border-white/[0.04]">
+                <div className="text-zinc-400">Mandate: <span className="text-violet-400 font-bold">{receipt.mandate_id}</span></div>
+                <div className="text-zinc-400 font-sans">Intent: <span className="text-zinc-200">{receipt.intent}</span></div>
                 <div className="text-zinc-400">UPI Token: <span className="text-zinc-300">{receipt.token_id || "N/A"}</span></div>
               </div>
 
-              <div className="p-3 bg-zinc-950/80 rounded-xl space-y-1.5 border border-zinc-800/60">
-                <div className="text-zinc-400">Authorized Cap: <span className="text-white font-bold">₹{receipt.total_authorized}</span></div>
-                <div className="text-zinc-400">Final Settled Amount: <span className="text-emerald-400 font-bold">₹{receipt.total_spent}</span></div>
-                <div className="text-zinc-400">Remaining Budget: <span className="text-indigo-300 font-bold">₹{receipt.remaining_budget}</span></div>
+              <div className="p-3 bg-zinc-950/80 rounded-xl space-y-1.5 border border-white/[0.04]">
+                <div className="text-zinc-400">Authorized Cap: <span className="text-white font-bold">₹{receipt.total_authorized.toLocaleString("en-IN")}</span></div>
+                <div className="text-zinc-400">Final Settled Amount: <span className="text-emerald-400 font-bold">₹{receipt.total_spent.toLocaleString("en-IN")}</span></div>
+                <div className="text-zinc-400">Remaining Budget: <span className="text-violet-300 font-bold">₹{receipt.remaining_budget.toLocaleString("en-IN")}</span></div>
               </div>
 
-              <div className="p-3 bg-zinc-950/80 rounded-xl space-y-1.5 border border-zinc-800/60">
+              <div className="p-3 bg-zinc-950/80 rounded-xl space-y-1.5 border border-white/[0.04]">
                 <div className="text-zinc-400">Semantic Gate: <span className="text-amber-400">{receipt.semantic_gate_score}</span></div>
                 <div className="text-zinc-400">Financial Gate: <span className="text-emerald-400">{receipt.financial_gate_audit}</span></div>
               </div>
 
               <div className="p-3 bg-emerald-950/30 rounded-xl border border-emerald-500/30 text-emerald-300 space-y-1">
-                <div className="font-bold">✓ Execution: VERIFIED & CHARGED</div>
+                <div className="font-semibold flex items-center gap-1.5">
+                  <CheckCircle2 size={14} /> Execution: Verified & Charged
+                </div>
                 <div className="text-[11px] text-zinc-300">{receipt.payment_confirmation}</div>
               </div>
 
-              <div className="text-[10px] text-zinc-600 truncate">
+              <div className="text-[10px] text-zinc-500 truncate">
                 Ed25519 Signature: {receipt.signature}
               </div>
             </div>
 
-            <button
+            <Button
+              variant="primary"
+              size="md"
               onClick={() => setShowReceipt(false)}
-              className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl text-xs transition-all"
+              className="w-full"
             >
               Done
-            </button>
-          </div>
+            </Button>
+          </Panel>
         </div>
       )}
 
