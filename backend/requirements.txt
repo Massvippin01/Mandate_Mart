@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+razorpay
+google-genai
+sentence-transformers
+sqlalchemy
+pydantic-settings
+python-dotenv
+httpx
+pynacl
