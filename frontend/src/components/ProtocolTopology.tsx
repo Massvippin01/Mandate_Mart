@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { 
   ReactFlow, 
   Background, 
@@ -23,7 +23,8 @@ import {
   CreditCard, 
   Link2,
   LucideIcon,
-  Activity
+  Activity,
+  AlertTriangle
 } from "lucide-react";
 
 // Icon mapping
@@ -101,6 +102,58 @@ const ProtocolNode = ({ data }: NodeProps) => {
   );
 };
 
+// Error Boundary
+interface ErrorBoundaryProps {
+  children: React.ReactNode;
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error?: Error;
+}
+
+class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error("Topology ErrorBoundary caught error:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="h-full w-full flex flex-col items-center justify-center p-8 text-center space-y-4 bg-zinc-950/80 border border-zinc-800 rounded-2xl">
+          <div className="w-12 h-12 rounded-2xl bg-rose-950/50 border border-rose-500/40 flex items-center justify-center text-rose-400">
+            <AlertTriangle size={24} />
+          </div>
+          <div className="space-y-1">
+            <h4 className="text-sm font-bold text-white font-mono">Topology stream error</h4>
+            <p className="text-xs text-zinc-400 max-w-sm">
+              Click below to retry and reconnect the protocol topology stream.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => this.setState({ hasError: false })}
+            className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-mono font-bold transition-all shadow-md hover:scale-[1.02]"
+          >
+            ↻ Retry Stream
+          </button>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
 const INITIAL_NODES: Node[] = [
   // Column 1: HUMAN
   {
@@ -175,34 +228,51 @@ const nodeTypes = {
 export default function ProtocolTopology() {
   const [nodes, setNodes] = useState<Node[]>(INITIAL_NODES);
   const [edges, setEdges] = useState<Edge[]>(INITIAL_EDGES);
+  const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
 
   useEffect(() => {
+    // Guard against double-mount by creating inside effect and closing in cleanup
     const eventSource = new EventSource("http://localhost:8000/api/ledger");
 
+    // Helper to register timer for cleanup
+    const registerTimer = (fn: () => void, ms: number) => {
+      const t = setTimeout(fn, ms);
+      timersRef.current.push(t);
+      return t;
+    };
+
     eventSource.onmessage = (event) => {
+      // 1. Entire body wrapped in try/catch to NEVER throw
       try {
-        const data = JSON.parse(event.data);
-        const action = (data.action || "").toUpperCase();
-        const gateResult = (data.gate_result || "").toUpperCase();
+        let block: Record<string, unknown> | null = null;
+        try {
+          block = JSON.parse(event.data);
+        } catch {
+          return;
+        }
+
+        // 5. Guard all property access
+        const action = String(block?.action ?? "").toUpperCase();
+        const gate = String(block?.gate_result ?? "").toUpperCase();
 
         const nodeStatusUpdates: Record<string, NodeStatus> = {};
         const edgeUpdates: Record<string, { stroke: string; animated?: boolean; strokeDasharray?: string }> = {};
 
-        // 1. MANDATE or POLICY → POLICY node active, HUMAN→POLICY edge animated cyan
+        // action contains MANDATE or POLICY → POLICY node active for 3s, HUMAN→POLICY edge animated cyan
         if (action.includes("MANDATE") || action.includes("POLICY")) {
           nodeStatusUpdates["policy"] = "active";
           nodeStatusUpdates["human"] = "active";
           edgeUpdates["human-policy"] = { stroke: "#06b6d4", animated: true };
         }
 
-        // 2. PASSPORT_ISSUED → PASSPORT node active
+        // PASSPORT_ISSUED → PASSPORT node active
         if (action.includes("PASSPORT")) {
           nodeStatusUpdates["passport"] = "active";
           edgeUpdates["policy-passport"] = { stroke: "#06b6d4", animated: true };
           edgeUpdates["passport-buyer"] = { stroke: "#06b6d4", animated: true };
         }
 
-        // 3. QUERY_CATALOG, REQUEST_PRICE, COUNTER_OFFER, NEGOTIATION → BUYER and MERCHANT active, negotiation edge amber
+        // action contains QUERY_CATALOG, REQUEST_PRICE, COUNTER_OFFER, NEGOTIATION → BUYER and MERCHANT active, negotiation edge amber
         if (
           action.includes("QUERY_CATALOG") ||
           action.includes("REQUEST_PRICE") ||
@@ -216,15 +286,15 @@ export default function ProtocolTopology() {
           edgeUpdates["negotiation"] = { stroke: "#f59e0b", animated: true };
         }
 
-        // 4. SEMANTIC or FINANCIAL or GATE → GATE node pass or fail
+        // action contains SEMANTIC or FINANCIAL or GATE → GATE node pass or fail
         if (action.includes("SEMANTIC") || action.includes("FINANCIAL") || action.includes("GATE")) {
-          const isPass = gateResult === "PASS" || action.includes("PASSED");
+          const isPass = gate === "PASS" || action.includes("PASSED");
           nodeStatusUpdates["gate"] = isPass ? "pass" : "fail";
           edgeUpdates["buyer-gate"] = { stroke: isPass ? "#10b981" : "#ef4444", animated: true };
           edgeUpdates["merchant-gate"] = { stroke: isPass ? "#10b981" : "#ef4444", animated: true };
         }
 
-        // 5. ORDER or PAYMENT_EXECUTED → RAZORPAY pass, money edge green
+        // action contains ORDER or PAYMENT_EXECUTED → RAZORPAY pass, money edge green
         if (action.includes("ORDER") || action.includes("PAYMENT_EXECUTED") || action.includes("SETTLED")) {
           nodeStatusUpdates["gate"] = "pass";
           nodeStatusUpdates["razorpay"] = "pass";
@@ -232,19 +302,19 @@ export default function ProtocolTopology() {
           edgeUpdates["razorpay-ledger"] = { stroke: "#10b981", animated: true };
         }
 
-        // 6. ATTACK or BLOCKED or KILL → GATE fail, money edge red dashed, NOT animated
-        if (action.includes("ATTACK") || action.includes("BLOCKED") || action.includes("KILL") || gateResult === "FAIL") {
+        // action contains ATTACK or BLOCKED or KILL → GATE fail, money edge red dashed, NOT animated
+        if (action.includes("ATTACK") || action.includes("BLOCKED") || action.includes("KILL") || gate === "FAIL") {
           nodeStatusUpdates["gate"] = "fail";
           edgeUpdates["money"] = { stroke: "#ef4444", strokeDasharray: "5 5", animated: false };
         }
 
-        // 7. Every event → LEDGER node pulses active for 1s
+        // Every event → LEDGER node pulses active for 1s
         nodeStatusUpdates["ledger"] = "active";
         edgeUpdates["gate-ledger"] = { stroke: "#818cf8", animated: true };
 
-        // Apply node updates
-        setNodes((prev) =>
-          prev.map((n) => {
+        // 2. NEVER replace nodes/edges arrays wholesale. Only mutate via functional updates
+        setNodes((prevNodes) =>
+          prevNodes.map((n) => {
             if (nodeStatusUpdates[n.id]) {
               return { ...n, data: { ...n.data, status: nodeStatusUpdates[n.id] } };
             }
@@ -252,9 +322,8 @@ export default function ProtocolTopology() {
           })
         );
 
-        // Apply edge updates
-        setEdges((prev) =>
-          prev.map((e) => {
+        setEdges((prevEdges) =>
+          prevEdges.map((e) => {
             if (edgeUpdates[e.id]) {
               return {
                 ...e,
@@ -271,37 +340,56 @@ export default function ProtocolTopology() {
           })
         );
 
-        // Reset ledger status after 1s
-        setTimeout(() => {
-          setNodes((prev) =>
-            prev.map((n) => (n.id === "ledger" ? { ...n, data: { ...n.data, status: "idle" } } : n))
+        // Reset ledger node status after 1s
+        registerTimer(() => {
+          setNodes((prevNodes) =>
+            prevNodes.map((n) => (n.id === "ledger" ? { ...n, data: { ...n.data, status: "idle" } } : n))
           );
         }, 1000);
 
-        // Reset all statuses after 3s
-        setTimeout(() => {
-          setNodes((prev) =>
-            prev.map((n) => ({ ...n, data: { ...n.data, status: "idle" } }))
+        // Reset updated nodes back to idle after 3s
+        const updatedNodeKeys = Object.keys(nodeStatusUpdates);
+        const updatedEdgeKeys = Object.keys(edgeUpdates);
+
+        registerTimer(() => {
+          setNodes((prevNodes) =>
+            prevNodes.map((n) => {
+              if (updatedNodeKeys.includes(n.id) && n.id !== "ledger") {
+                return { ...n, data: { ...n.data, status: "idle" } };
+              }
+              return n;
+            })
           );
-          setEdges((prev) =>
-            prev.map((e) => ({
-              ...e,
-              animated: false,
-              style: { stroke: "#4b5563", strokeWidth: 2, strokeDasharray: undefined },
-            }))
+          setEdges((prevEdges) =>
+            prevEdges.map((e) => {
+              if (updatedEdgeKeys.includes(e.id)) {
+                return {
+                  ...e,
+                  animated: false,
+                  style: { stroke: "#4b5563", strokeWidth: 2, strokeDasharray: undefined },
+                };
+              }
+              return e;
+            })
           );
         }, 3000);
 
-      } catch (err) {
-        console.error("SSE parse error in ProtocolTopology:", err);
+      } catch (e) {
+        console.warn("topology event skipped", e);
       }
     };
 
-    return () => eventSource.close();
+    // 3 & 4. Cleanup on unmount: close EventSource and clear ALL registered timers
+    return () => {
+      eventSource.close();
+      timersRef.current.forEach((id) => clearTimeout(id));
+      timersRef.current = [];
+    };
   }, []);
 
   return (
-    <div className="h-[calc(100vh-140px)] w-full flex flex-col glass-card border border-zinc-800/80 rounded-2xl overflow-hidden shadow-2xl">
+    /* STEP 4: Sizing wrapper div */
+    <div className="h-[calc(100vh-240px)] min-h-[540px] w-full flex flex-col glass-card border border-zinc-800/80 rounded-2xl overflow-hidden shadow-2xl">
       {/* ── TOP LEGEND ROW ── */}
       <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5 bg-zinc-950/90 border-b border-zinc-800/80">
         <div className="flex items-center gap-3">
@@ -315,7 +403,7 @@ export default function ProtocolTopology() {
           </div>
         </div>
 
-        {/* Legend */}
+        {/* Legend: 🟢 pass · 🔴 blocked · 🟡 negotiating · ⚪ idle */}
         <div className="flex items-center gap-4 text-xs font-mono text-zinc-400 bg-zinc-900/80 px-4 py-1.5 rounded-xl border border-zinc-800">
           <span className="flex items-center gap-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-green-500 shadow-[0_0_6px_rgba(34,197,94,0.6)]" /> pass
@@ -335,20 +423,24 @@ export default function ProtocolTopology() {
         </div>
       </div>
 
-      {/* ── GRAPH CANVAS ── */}
+      {/* ── GRAPH CANVAS WITH ERROR BOUNDARY ── */}
       <div className="flex-1 w-full relative bg-[#09090e]">
-        <ReactFlow 
-          nodes={nodes} 
-          edges={edges} 
-          nodeTypes={nodeTypes} 
-          fitView 
-          proOptions={{ hideAttribution: true }}
-          minZoom={0.6}
-          maxZoom={1.4}
-        >
-          <Background variant={BackgroundVariant.Dots} gap={24} color="#1e1e30" />
-          <Controls showInteractive={false} className="!bg-zinc-900 !border-zinc-800 !fill-zinc-400 [&>button]:!border-zinc-800" />
-        </ReactFlow>
+        <ErrorBoundary>
+          <ReactFlow 
+            nodes={nodes} 
+            edges={edges} 
+            nodeTypes={nodeTypes} 
+            fitView 
+            colorMode="dark"
+            nodesConnectable={false}
+            proOptions={{ hideAttribution: true }}
+            minZoom={0.6}
+            maxZoom={1.4}
+          >
+            <Background variant={BackgroundVariant.Dots} gap={24} color="#1e1e30" />
+            <Controls showInteractive={false} className="!bg-zinc-900 !border-zinc-800 !fill-zinc-400 [&>button]:!border-zinc-800" />
+          </ReactFlow>
+        </ErrorBoundary>
       </div>
     </div>
   );

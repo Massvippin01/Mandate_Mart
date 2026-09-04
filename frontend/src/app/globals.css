@@ -107,3 +107,8 @@ body {
   background: rgba(99, 102, 241, 0.3);
   color: #e0e7ff;
 }
+
+/* ── React Flow Controls Dark Theme ───────── */
+.react-flow__controls button { background:#18181b !important; border-bottom:1px solid #27272a !important; color:#a1a1aa !important; }
+.react-flow__controls button:hover { background:#27272a !important; }
+.react-flow__controls button svg { fill: currentColor !important; }
