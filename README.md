@@ -15,7 +15,7 @@
 [![Razorpay](https://img.shields.io/badge/Payments-Razorpay-0C2340?style=for-the-badge)](https://razorpay.com/)
 [![Ed25519](https://img.shields.io/badge/Cryptography-Ed25519-7C3AED?style=for-the-badge)](https://ed25519.cr.yp.to/)
 [![God Mode QA](https://img.shields.io/badge/QA-8%2F8%20PASS-success?style=for-the-badge)](backend/test_god_mode.py)
-[![License](https://img.shields.io/badge/License-MIT-blue?style=for-the-badge)](LICENSE)
+[![License: Apache-2.0](https://img.shields.io/badge/License-Apache_2.0-blue?style=for-the-badge)](LICENSE)
 
 <br/>
 
@@ -468,4 +468,32 @@ The **God-Mode** verification suite exercises every security boundary end-to-end
 cd backend
 python test_god_mode.py
 ```
+
+
+---
+
+<div align="center">
+
+### **AI should have autonomy — not unrestricted financial authority.**
+
+<br/>
+
+**MandateMart**
+
+*Reason freely. Negotiate intelligently. Spend within bounds.*
+
+<br/>
+
+[⭐ Star this repository](https://github.com/Massvippin01/Mandate_Mart)
+
+<br/>
+<sub>Built for the Razorpay AI Buildathon 2026 · Track 01 · Every rupee explainable, bounded, and gated.</sub>
+
+</div>
+
+---
+
+## 📜 License
+
+This project is licensed under the **Apache License 2.0**. See [`LICENSE`](LICENSE) for details.
 
