@@ -2,6 +2,7 @@ fastapi
 uvicorn
 razorpay
 google-genai
+google-generativeai
 sentence-transformers
 sqlalchemy
 pydantic-settings
