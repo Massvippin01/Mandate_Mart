@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState } from "react";
 import { 
   ReactFlow, 
   Background, 
@@ -168,11 +168,13 @@ const INITIAL_EDGES: Edge[] = [
   { id: "razorpay-ledger", source: "razorpay", target: "ledger", sourceHandle: "bottom-source", targetHandle: "top-target", animated: false, style: { stroke: "#4b5563", strokeWidth: 2 } },
 ];
 
+const nodeTypes = {
+  protocol: ProtocolNode,
+};
+
 export default function ProtocolTopology() {
   const [nodes, setNodes] = useState<Node[]>(INITIAL_NODES);
   const [edges, setEdges] = useState<Edge[]>(INITIAL_EDGES);
-
-  const nodeTypesMemo = useMemo(() => ({ protocol: ProtocolNode }), []);
 
   useEffect(() => {
     const eventSource = new EventSource("http://localhost:8000/api/ledger");
@@ -338,7 +340,7 @@ export default function ProtocolTopology() {
         <ReactFlow 
           nodes={nodes} 
           edges={edges} 
-          nodeTypes={nodeTypesMemo} 
+          nodeTypes={nodeTypes} 
           fitView 
           proOptions={{ hideAttribution: true }}
           minZoom={0.6}
