@@ -11,6 +11,7 @@ import RevenueRescue from "@/components/RevenueRescue";
 const TransactionPassport = dynamic(() => import("@/components/TransactionPassport"), { ssr: false });
 const WarRoomTerminal = dynamic(() => import("@/components/WarRoomTerminal"), { ssr: false });
 const NegotiationStoryboard = dynamic(() => import("@/components/NegotiationStoryboard"), { ssr: false });
+const ProtocolTopology = dynamic(() => import("@/components/ProtocolTopology"), { ssr: false });
 
 interface CatalogItem {
   product_id: string;
@@ -1142,14 +1143,8 @@ export default function Dashboard() {
 
               {/* ══════════════ TAB 2: PROTOCOL MAP (TOPOLOGY) ══════════════ */}
               {activeTab === "topology" && (
-                <div className="max-w-7xl mx-auto glass-card p-12 text-center rounded-2xl border border-zinc-800/80 space-y-4">
-                  <div className="w-16 h-16 rounded-2xl bg-indigo-950/40 border border-indigo-500/30 flex items-center justify-center mx-auto text-indigo-400 shadow-lg shadow-indigo-950/50">
-                    <Network size={32} />
-                  </div>
-                  <h3 className="text-xl font-bold text-white tracking-wide">Protocol Architecture & Topology Map</h3>
-                  <div className="text-gray-500 p-8 font-mono text-sm max-w-md mx-auto">
-                    Protocol map loading in next upgrade
-                  </div>
+                <div className="w-full animate-fade-in">
+                  <ProtocolTopology />
                 </div>
               )}
 
