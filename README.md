@@ -1,502 +1,154 @@
 <div align="center">
 
 # 🛡️ MandateMart
+### Frontend Command Center
 
-### **The Trust Layer for Agentic Commerce**
+**The mission-control dashboard for autonomous agent-to-agent commerce — where every rupee an AI agent spends is authorized, verified, and cryptographically provable.**
 
-**Give AI the ability to transact — without giving AI unrestricted access to money.**
-
-<br />
-
-[![Razorpay AI Buildathon](https://img.shields.io/badge/Razorpay%20AI%20Buildathon-2026-0C2340?style=for-the-badge)](https://razorpay.com/)
-[![Next.js](https://img.shields.io/badge/Next.js-15-000000?style=for-the-badge&logo=next.js&logoColor=white)](https://nextjs.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
-[![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
-
-<br />
-
-[![Payments](https://img.shields.io/badge/Payments-Razorpay-0C2340?style=for-the-badge)](https://razorpay.com/)
-[![Security](https://img.shields.io/badge/Security-Ed25519%20%2B%20SHA--256-7C3AED?style=for-the-badge)](#-security-model)
-[![Tests](https://img.shields.io/badge/Tests-8%2F8%20PASS-16A34A?style=for-the-badge)](#-testing)
-[![License](https://img.shields.io/badge/License-Apache%202.0-2563EB?style=for-the-badge)](LICENSE)
-
-<br /><br />
-
-> **AI can reason. AI can negotiate. AI can recommend.**
->
-> **But AI cannot move money outside the authority explicitly delegated to it.**
+[![Razorpay AI Buildathon](https://img.shields.io/badge/Razorpay_AI_Buildathon-2026-7C3AED?style=for-the-badge&logo=razorpay&logoColor=white)](https://razorpay.com/)
+[![Next.js 15](https://img.shields.io/badge/Next.js-15-000000?style=for-the-badge&logo=next.js&logoColor=white)](https://nextjs.org/)
+[![Tailwind v4](https://img.shields.io/badge/Tailwind_CSS-v4-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)](https://tailwindcss.com/)
+[![React Flow](https://img.shields.io/badge/@xyflow/react-Topology-F43F5E?style=for-the-badge&logo=react&logoColor=white)](https://reactflow.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-Strict-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 
 <br/>
 
-[Features](#-core-capabilities) · [Architecture](#️-architecture) · [Security](#-security-model) · [Quick Start](#-quick-start) · [Testing](#-testing) · [Rubric Alignment](#-track-01-rubric-alignment)
-
-<br/><br/>
-
-<!-- TODO: Replace with your actual demo GIF -->
-<!-- <img src="docs/assets/demo.gif" alt="MandateMart Demo" width="900"/> -->
+<sub>Real-time SSE telemetry · Cryptographically verifiable ledger</sub>
 
 </div>
 
----
+<br/>
 
-## ⚡ What is MandateMart?
+## ⚡ The Problem in One Sentence
 
-**MandateMart is a security and authorization layer for AI-driven payments.**
+AI agents are starting to spend real money on our behalf — but nobody can *see* what they're authorized to do, *verify* what they actually did, or *stop* them instantly when something goes wrong. MandateMart is the control tower that makes autonomous commerce auditable, governable, and safe.
 
-As AI agents move from *recommending* products to **actually purchasing them**, a fundamental problem appears:
+<br/>
 
-> **How do you give an AI enough authority to complete a transaction without giving it enough authority to financially harm the user?**
+## 🖥️ Five Views, One Command Center
 
-With NPCI's UAP, Google's AP2, and the x402 standard racing to define agent-to-agent commerce, **MandateMart is a working reference implementation of that future — built on Razorpay rails.**
+Built on **Next.js 15 (App Router)** with a strict fintech design language inspired by Vercel and Stripe dashboards, the sidebar gives operators full visibility and override power over every agent transaction.
 
-We separate four concerns that most agentic-commerce demos collapse into one:
+| # | View | What it shows |
+|---|------|----------------|
+| 1 | 📊 **Analytics & KPIs** | Executive GMV via spring-physics counters, ZOPA savings, rescued transactions, prevented unauthorized spend |
+| 2 | 🕸️ **Topology & Flow** | Live animated `@xyflow/react` graph of authority + money flow across 8 system nodes, pulsing in sync with SSE events |
+| 3 | 🔗 **Audit Ledger** | SHA-256 Merkle-linked audit blocks with one-click **Verify Chain** and a **Simulate Tamper** button that shows instant invalidation |
+| 4 | 🏪 **Merchant Catalog** | Live inventory + pricing, with `reserve_price` floors kept strictly server-side private |
+| 5 | 💬 **Negotiation Storyboard** | WhatsApp-style bubble UI replaying the Buyer Agent (cyan) ↔ Merchant Agent (amber) bargaining rounds |
 
-```text
-AI DECISION-MAKING   (probabilistic, can hallucinate)
-        ↓
-POLICY ENFORCEMENT   (compiled from natural language)
-        ↓
-CRYPTOGRAPHIC AUTH   (Ed25519 signed mandates)
-        ↓
-PAYMENT EXECUTION    (deterministic, Razorpay rails)
+<br/>
+
+### 🕸️ Topology & Flow — the centerpiece view
+
+```
+Human Principal → Policy Compiler → Buyer Agent → Merchant Agent
+       → Semantic Gate → Financial Gate → Razorpay Rails → Merkle Ledger
 ```
 
-The AI remains probabilistic. **The money layer remains deterministic.**
+Every node pulses live as authority and money move through the system — this is usually the moment judges lean in.
 
----
+<br/>
 
-## 🎯 The Problem
+## 🪟 Interactive Modal Systems
 
-Traditional AI payment architectures fall into three failure modes:
+| Modal | Purpose |
+|---|---|
+| 🖥️ **War Room Terminal** | Raw SSE event stream — hashes, gate execution logs, high-density telemetry |
+| 💰 **Revenue Rescue Center** | Converts budget shortfalls into Razorpay Payment Links instead of abandoned carts |
+| 🧾 **Transaction Passport** | Cryptographic receipt generator — exports a verifiable PNG proof of mandate + settlement |
+| 🔴 **Hardware Kill Switch** | One tap → instant nullification of active agent nonces, no confirmation lag |
 
-### 01 — Too Much Trust
-Give an AI direct access to a payment API. A prompt injection, hallucination, or malicious tool response causes an unauthorized transaction.
+<br/>
 
-### 02 — Too Much Human Intervention
-Require OTP / MFA / manual checkout for every transaction. This defeats the entire point of autonomous commerce.
+## 🎨 Design System
 
-### 03 — No Verifiable Authorization
-Even when a purchase succeeds, answering **"why was this payment allowed?"** requires forensic log-diving — if the logs even exist.
+A curated fintech palette lives in `src/components/ui/primitives.tsx` — nothing off-palette ships.
 
-**MandateMart solves all three at once.**
+<table>
+<tr>
+<td valign="top" width="50%">
 
----
+**Accents (meaning-coded)**
+- 🟣 Violet — brand / primary
+- 🟢 Emerald — success / money
+- 🔴 Rose — danger / kill switch
+- 🟡 Amber — warning / merchant agent
+- 🔵 Cyan — buyer agent identity
 
-## 💡 Our Approach: Delegated Spend Authority
+**Typography**
+- `Inter` — all headers & body
+- `JetBrains Mono` — amounts, order IDs, hashes, ledger logs *only*
 
-The user defines what the agent may do. The agent operates autonomously **inside those cryptographically-enforced boundaries**.
+</td>
+<td valign="top" width="50%">
 
-```text
-┌─────────────────────┐
-│       HUMAN         │
-│ "Buy hackathon gear │
-│       under ₹4K"    │
-└──────────┬──────────┘
-           │
-           ▼
-┌─────────────────────┐
-│   POLICY COMPILER   │  (Gemini JSON-mode)
-│ Budget: ₹4,000      │
-│ Categories: Gear    │
-│ Expiry: 24 hours    │
-└──────────┬──────────┘
-           │
-           ▼
-┌─────────────────────┐
-│  ED25519 PASSPORT   │
-│ Signed Authority    │
-└──────────┬──────────┘
-           │
-           ▼
-┌─────────────────────┐         ┌─────────────────────┐
-│    BUYER AGENT      │◄───A2A─►│   MERCHANT AGENT    │
-│ (search, select)    │ ZOPA    │ (hidden reserve     │
-│                     │ bargain │  floor, bundling)   │
-└──────────┬──────────┘         └─────────────────────┘
-           │
-           ▼
-      ┌───────────┐
-      │ DOUBLE    │
-      │   GATE    │
-      └─────┬─────┘
-            │
-      ┌─────┴─────┐
-      ▼           ▼
-  SEMANTIC    FINANCIAL
-    GATE        GATE
-  (ML cos-sim) (pure Python)
-      │           │
-      └─────┬─────┘
-            ▼
-      ┌──────────────┐
-      │   RAZORPAY   │
-      │ Orders API / │
-      │ Pay Links    │
-      └──────┬───────┘
-             ▼
-     SHA-256 MERKLE LEDGER
-```
+**Core primitives**
+- `Panel` — glassmorphic container
+- `PanelHeader` — icon + title + meta badges
+- `Badge` — `neutral · success · danger · warn · info`
+- `Button` — `primary · danger · success · outline · ghost`
 
----
+**Magic UI accents**
+- `NumberTicker` — spring-physics ₹ counter (`en-IN`)
+- `BorderBeam` — animated conic-gradient sweep
+- `DotPattern` — subtle SVG background matrix
 
-## 🚀 Core Capabilities
+</td>
+</tr>
+</table>
 
-### 🔐 1. Cryptographic Agent Passports (Ed25519)
-Every authorized agent receives an Ed25519-signed identity containing its delegated authority. Modify even one byte of the mandate and the signature invalidates instantly. **No shared secrets required** — merchants verify using a public key.
+<br/>
 
-```json
-{
-  "agent_id": "BUYER-7F32",
-  "purpose": "hackathon_equipment",
-  "max_transaction": 2500,
-  "daily_limit": 4000,
-  "allowed_categories": ["electronics", "peripherals"],
-  "blocked_categories": ["luxury", "gambling"],
-  "expires_at": "2026-09-05T00:00:00Z"
-}
-```
-
-### 🧠 2. Policy Compiler
-Users express intent in natural language:
-
-> *"Buy the best hackathon accessories under ₹4,000."*
-
-Gemini (JSON-mode, with deterministic fallback) compiles this into a typed `SpendPolicy`. The LLM **interprets intent** — it does **not** get to redefine financial authority.
-
-### 🤖 3. Agent-to-Agent Commerce (A2A Native)
-Merchants publish a machine-readable manifest at `/.well-known/agent.json` describing their capabilities, skills, and security requirements. Foreign AI agents discover and transact with **zero UI** involved — proven live by our External Bot Raid simulator.
-
-### 🤝 4. ZOPA Negotiation Engine
-Bilateral bargaining modeled on the **Zone of Possible Agreement**. The merchant's `reserve_price` is stored in SQLite and **never exposed** to the buyer agent or any public endpoint. Bundles, counter-offers, and concession strategies emerge autonomously.
-
-```text
-Original Bundle     ₹4,299
-        ↓
-ZOPA Negotiation
-        ↓
-Final Offer         ₹3,799
-        ↓
-Savings              ₹500   (buyer)
-Margin Protected   ₹1,200   (merchant, above reserve floor)
-```
-
-### 🛡️ 5. Deterministic Double Gate
-**The core security boundary.** Before any rupee reaches Razorpay, the transaction must pass two independent gates:
-
-- **Gate 01 — Semantic Intent** — Cosine similarity between human intent and cart description (Gemini embeddings, threshold 0.58, Jaccard fallback).
-- **Gate 02 — Deterministic Financial** — Pure Python arithmetic. No LLM. No prompt. No probabilistic reasoning.
-
-```python
-proposed_amount <= max_budget - spent_amount
-```
-
-> **The critical invariant: If the financial gate fails, the Razorpay API is never called.** You can prove this live in the browser's Network tab.
-
-### ⚔️ 6. Red Team Adversarial Arena
-A built-in attack simulator proving the security boundary holds under real adversarial conditions:
-
-| Attack Vector       | Result      |
-|---------------------|-------------|
-| Prompt Injection    | 🛑 Blocked  |
-| Category Violation  | 🛑 Blocked  |
-| Mandate Escalation  | 🛑 Blocked  |
-| Replay Attack       | 🛑 Blocked  |
-| Tool Poisoning      | 🛑 Blocked  |
-
-Every blocked attack is hashed into the Merkle ledger. **The AI is allowed to fail; the payment layer is not allowed to fail open.**
-
-### 🛑 7. Instant Kill Switch
-A pulsing emergency button revokes an agent's nonce in real-time. The Double Gate checks revocation **before payment execution** — a rogue agent's next API call is dead on arrival in <1ms.
-
-### 💰 8. Revenue Rescue Command Center
-A measurable analytics dashboard proving Track 01's *"grow merchant revenue"* mandate:
-
-- **ZOPA Recovered** — sales saved via autonomous negotiation
-- **Payment Links Rescued** — shortfalls converted to top-up links instead of abandoned carts
-- **Fraud Blocked** — hostile spend neutralized before reaching Razorpay
-
-### 🎙️ 9. Voice Mandate Input
-Users can speak their mandate intent via the Web Speech API (`en-IN`). The spoken phrase compiles into the same signed policy as typed input — conversational, not form-based.
-
-### 🤖 10. External Bot Raid Simulator
-A standalone `external_bot.py` proves "sellable to AI buyers" by discovering our A2A manifest, creating its own mandate, negotiating, and settling — all via raw HTTP, zero UI. The dashboard flags live: `⚠️ FOREIGN AGENT DETECTED`.
-
-### 🔔 11. Razorpay Webhook Settlement
-Production-grade async settlement. A simulator HMAC-signs a `payment.captured` payload exactly as Razorpay would, delivers it to our webhook endpoint, and our verification pipeline settles the mandate in the Merkle ledger.
-
-### 🧾 12. Cryptographic Transaction Passport
-A downloadable PNG receipt containing the Merkle root hash, Ed25519 signature, gate verdicts, and Razorpay order ID — a verifiable artifact for audits, disputes, and compliance.
-
-### 🗺️ 13. Live Protocol Topology
-A `@xyflow/react` graph where nodes light up in real-time as the SSE stream delivers ledger events — a judge-friendly visual trace of the authorization pipeline.
-
-### 💬 14. Negotiation Storyboard
-A WhatsApp-style chat UI rendering the raw A2A negotiation as a human-readable conversation between buyer and merchant agents — turning black-box agent reasoning into an inspectable dialogue.
-
----
-
-## 🏗️ Architecture
-
-```text
-                       ┌──────────────────┐
-                       │      HUMAN       │
-                       └────────┬─────────┘
-                                │ natural-language intent
-                                ▼
-                       ┌──────────────────┐
-                       │ POLICY COMPILER  │  (Gemini JSON-mode)
-                       └────────┬─────────┘
-                                ▼
-                       ┌──────────────────┐
-                       │ ED25519 PASSPORT │
-                       └────────┬─────────┘
-                                │
-                   ┌────────────┴────────────┐
-                   ▼                         ▼
-          ┌─────────────────┐       ┌─────────────────┐
-          │   BUYER AGENT   │◄─A2A─►│ MERCHANT AGENT  │
-          │ (Gemini tools)  │ ZOPA  │ (hidden reserve)│
-          └────────┬────────┘       └─────────────────┘
-                   ▼
-          ┌────────────────────────────────┐
-          │       DETERMINISTIC            │
-          │         DOUBLE GATE            │
-          │   semantic   │   financial     │
-          │    (ML)      │   (arithmetic)  │
-          └──────────────┬─────────────────┘
-                         │
-                ┌────────┴────────┐
-                ▼                 ▼
-        ┌──────────────┐  ┌──────────────┐
-        │ RAZORPAY     │  │ RAZORPAY     │
-        │ Orders API   │  │ Payment Links│
-        │ (happy path) │  │ (shortfall)  │
-        └──────┬───────┘  └──────┬───────┘
-               │                 │
-               └────────┬────────┘
-                        ▼
-              ┌──────────────────┐
-              │  SHA-256 MERKLE  │  SSE → frontend
-              │   AUDIT LEDGER   │
-              └──────────────────┘
-```
-
----
-
-## 🔒 Security Model
-
-MandateMart enforces one architectural axiom:
-
-> ### **LLMs can propose. Deterministic systems authorize.**
-
-### Trust Boundaries
-
-| Component                  | Trusted to move money? |
-|----------------------------|:----------------------:|
-| LLM                        | ❌                     |
-| Buyer Agent                | ❌                     |
-| Merchant Agent             | ❌                     |
-| A2A / MCP Tool             | ❌                     |
-| Semantic Model             | ❌                     |
-| **Policy Engine**          | ✅                     |
-| **Cryptographic Verify**   | ✅                     |
-| **Financial Gate**         | ✅                     |
-| **Razorpay**               | ✅                     |
-
-Compromising the AI layer **does not** grant access to the payment layer.
-
-### Five Invariants
-
-```text
-Financial  :  AUTHORIZED_AMOUNT ≤ REMAINING_DELEGATED_LIMIT
-Identity   :  VALID_SIGNATURE ∧ NONCE_NOT_REVOKED ∧ ¬EXPIRED
-Payment    :  GATE_FAILURE → RAZORPAY_CALL = 0
-Audit      :  EVENT_N references HASH(EVENT_N−1)
-Privacy    :  reserve_price ∉ public API ∧ reserve_price ∉ LLM context
-```
-
----
-
-## 💳 Razorpay Integration
-
-The architecture deliberately separates agentic intelligence from payment execution:
-
-- **Orders API** — Happy-path settlement when gates pass.
-- **Payment Links** — Graceful shortfall recovery (the rubric's *"one failure handled gracefully"* requirement).
-- **Webhook Settlement** — HMAC-SHA256 verified `payment.captured` events settle mandates in the ledger.
-- **Test-key enforcement** — `RAZORPAY_KEY_ID` is asserted to start with `rzp_test_` at startup; production keys cannot accidentally be used.
-
-The security boundary exists **before** money reaches the payment API.
-
----
-
-## 📊 Track 01 Rubric Alignment
-
-| Track 01 Requirement                  | MandateMart Implementation                                                              |
-|---------------------------------------|-----------------------------------------------------------------------------------------|
-| **Grow merchant revenue**             | ZOPA negotiation + bundle optimization + Revenue Rescue analytics + Payment Link recovery |
-| **Sellable to AI buyers**             | `/.well-known/agent.json` A2A manifest + External Bot Raid simulator                    |
-| **Explainable**                       | Policy Compiler + Negotiation Storyboard + Transaction Passport                         |
-| **Bounded**                           | Ed25519 passports with scoped categories, ceilings, expiry, revocation nonces            |
-| **Gated**                             | Deterministic Double Gate (semantic + financial) — LLMs cannot touch money               |
-| **Audit trail**                       | SHA-256 Merkle ledger streamed via SSE + live tamper simulator                          |
-| **One failure handled gracefully**    | Budget shortfalls → Razorpay Payment Link (instead of abandoned cart)                   |
-
----
-
-## 🛠️ Tech Stack
-
-| Layer           | Technology                                                                                     |
-|-----------------|------------------------------------------------------------------------------------------------|
-| **Frontend**    | Next.js 15 (App Router), TypeScript, Tailwind CSS, Framer Motion, @xyflow/react, Recharts, Lucide React, Magic UI primitives |
-| **Backend**     | Python 3.11+, FastAPI, Uvicorn, Pydantic v2, PyNaCl, SQLite (WAL mode), Razorpay SDK, Google Gemini API |
-| **Security**    | Ed25519 signatures, SHA-256 Merkle chain, cryptographic nonces, HMAC webhook verification       |
-| **AI / Agents** | Buyer Agent, Merchant Agent, Policy Compiler, Semantic Intent Engine, ZOPA Negotiation Engine, Red Team Simulator |
-
----
-
-## 📁 Project Structure
-
-```text
-Mandate_Mart/
-│
-├── backend/
-│   ├── main.py                # FastAPI app, SSE stream, A2A manifest, Red Team, Webhooks
-│   ├── agent.py               # Buyer Agent logic & Gemini tool calling
-│   ├── merchant_agent.py      # Merchant Agent with hidden reserve floor (ZOPA)
-│   ├── gates.py               # Double Gate validation & Kill Switch
-│   ├── models.py              # SQLAlchemy models (Mandate, CatalogItem, LedgerEntry, RevenueEvent)
-│   ├── schemas.py             # Pydantic schemas (SpendPolicy, MandateCreate)
-│   ├── utils.py               # Ed25519 PassportAuthority & Policy Compiler
-│   ├── database.py            # SQLite engine (WAL mode) + session management
-│   ├── external_bot.py        # Foreign AI Agent Raid Simulator
-│   ├── test_god_mode.py       # Automated 8-point verification suite
-│   ├── seed_revenue.py        # Sample revenue-event data
-│   ├── requirements.txt
-│   ├── .env.example
-│   └── mandatemart.db
-│
-├── frontend/
-│   ├── src/
-│   │   ├── app/
-│   │   │   ├── layout.tsx     # Inter + JetBrains Mono typography
-│   │   │   ├── globals.css    # Theme + React Flow dark-mode styles
-│   │   │   └── page.tsx       # Command Center (6 views + voice mandate)
-│   │   └── components/
-│   │       ├── ui/primitives.tsx              # Panel, Badge, Button design system
-│   │       ├── magicui/                       # NumberTicker, BorderBeam, DotPattern
-│   │       ├── ProtocolTopology.tsx           # Live React Flow graph
-│   │       ├── NegotiationStoryboard.tsx      # WhatsApp-style A2A chat
-│   │       ├── RevenueRescue.tsx              # Merchant GMV analytics
-│   │       ├── RedTeamArena.tsx               # 5-vector attack simulator
-│   │       ├── TransactionPassport.tsx        # Downloadable PNG receipt
-│   │       └── WarRoomTerminal.tsx            # Raw SSE telemetry viewer
-│   ├── package.json
-│   └── tailwind.config.ts
-│
-└── README.md
-```
-
----
-
-## ⚡ Quick Start
-
-### Prerequisites
-- Python **3.11+**
-- Node.js **18+** and npm
-- Razorpay test-mode credentials (`rzp_test_...`)
-- Google Gemini API key
-
-### 1. Clone
+## 🚀 Getting Started
 
 ```bash
-git clone https://github.com/Massvippin01/Mandate_Mart.git
-cd Mandate_Mart
-```
-
-### 2. Backend
-
-```bash
-cd backend
-python -m venv venv
-
-# Windows
-venv\Scripts\activate
-# macOS / Linux
-source venv/bin/activate
-
-pip install -r requirements.txt
-
-cp .env.example .env
-# Fill in: RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET, GEMINI_API_KEY, RAZORPAY_WEBHOOK_SECRET
-
-python -m uvicorn main:app --reload --port 8000
-```
-
-Backend at `http://localhost:8000` — Swagger docs at `/docs`, A2A manifest at `/.well-known/agent.json`.
-
-### 3. Frontend
-
-```bash
-cd ../frontend
+cd frontend
 npm install
 npm run dev
 ```
 
-Dashboard at `http://localhost:3000`.
+Open **[http://localhost:3000](http://localhost:3000)** to view the Command Center.
 
-### 4. Seed Demo Data (optional)
-
-```bash
-cd backend
-python seed_revenue.py
-```
-
-### 5. Run the External Bot Raid
+<details>
+<summary><strong>Production build</strong></summary>
 
 ```bash
-cd backend
-python external_bot.py
+npm run build
+npm run start
 ```
 
-Watch the dashboard flash `⚠️ FOREIGN AGENT DETECTED` as the foreign agent transacts entirely via raw API.
+</details>
 
----
+<br/>
 
-## 🧪 Testing
+## 📁 Directory Structure
 
-The **God-Mode** verification suite exercises every security boundary end-to-end:
-
-```bash
-cd backend
-python test_god_mode.py
+```text
+frontend/src/
+├── app/
+│   ├── layout.tsx         # Google Fonts (Inter + JetBrains Mono)
+│   ├── globals.css        # Tailwind theme & React Flow dark-mode overrides
+│   └── page.tsx           # Command Center orchestrator & 6 view controllers
+└── components/
+    ├── ui/
+    │   └── primitives.tsx      # Design system primitives (Panel, Badge, Button, cn)
+    ├── magicui/
+    │   ├── number-ticker.tsx   # Indian Rupee animated spring counter
+    │   ├── border-beam.tsx     # Conic-gradient border highlight
+    │   └── dot-pattern.tsx     # SVG background dot matrix
+    ├── ProtocolTopology.tsx        # Interactive @xyflow/react live topology graph
+    ├── NegotiationStoryboard.tsx   # Autonomous A2A dialogue storyboard
+    ├── RevenueRescue.tsx           # Margin optimization & shortfall recovery modal
+    ├── RedTeamArena.tsx            # 5-vector adversarial simulation arena
+    ├── TransactionPassport.tsx     # Verifiable cryptographic PNG receipt
+    └── WarRoomTerminal.tsx         # Live raw SSE ledger telemetry terminal
 ```
 
-
----
+<br/>
 
 <div align="center">
 
-### **AI should have autonomy — not unrestricted financial authority.**
-
-<br/>
-
-**MandateMart**
-
-*Reason freely. Negotiate intelligently. Spend within bounds.*
-
-<br/>
-
-[⭐ Star this repository](https://github.com/Massvippin01/Mandate_Mart)
-
-<br/>
-<sub>Built for the Razorpay AI Buildathon 2026 · Track 01 · Every rupee explainable, bounded, and gated.</sub>
+**Built for the Razorpay AI Buildathon 2026** · Making agentic commerce something you can actually trust
 
 </div>
-
----
-
-## 📜 License
-
-This project is licensed under the **Apache License 2.0**. See [`LICENSE`](LICENSE) for details.
-
