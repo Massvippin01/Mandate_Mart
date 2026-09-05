@@ -11,21 +11,32 @@ interface Analytics {
   payment_link_rescued_count: number;
   fraud_blocked_paise: number;
   fraud_blocked_count: number;
+  total_revenue_rescued_paise: number;
   total_revenue_rescued_inr: number;
-  total_fraud_blocked_inr: number;
+  legacy_abandonment_loss_paise: number;
   legacy_abandonment_loss_inr: number;
+  total_fraud_blocked_paise: number;
+  total_fraud_blocked_inr: number;
+  fraud_blocked_inr?: number;
 }
 
 export default function RevenueRescue({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const [data, setData] = useState<Analytics | null>(null);
 
   useEffect(() => {
-    if (isOpen) {
+    if (!isOpen) return;
+
+    const fetchAnalytics = () => {
       fetch("http://localhost:8000/api/merchant/analytics")
-        .then(r => r.json())
+        .then((r) => r.json())
         .then(setData)
         .catch(console.error);
-    }
+    };
+
+    fetchAnalytics();
+    // Poll every 4 seconds while modal is open
+    const interval = setInterval(fetchAnalytics, 4000);
+    return () => clearInterval(interval);
   }, [isOpen]);
 
   if (!isOpen) return null;
@@ -40,7 +51,15 @@ export default function RevenueRescue({ isOpen, onClose }: { isOpen: boolean; on
             <div className="w-8 h-8 rounded-lg bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
               <TrendingUp size={18} />
             </div>
-            <h2 className="text-xl font-bold text-white tracking-tight">Revenue Rescue Command Center</h2>
+            <div>
+              <div className="flex items-center gap-2.5">
+                <h2 className="text-xl font-bold text-white tracking-tight">Revenue Rescue Command Center</h2>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-mono font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 shadow-sm animate-pulse">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+                  ● LIVE
+                </span>
+              </div>
+            </div>
           </div>
           <button 
             onClick={onClose} 
@@ -58,7 +77,7 @@ export default function RevenueRescue({ isOpen, onClose }: { isOpen: boolean; on
                 Total Merchant Revenue Rescued Today
               </div>
               <div className="text-4xl md:text-5xl font-extrabold text-emerald-400 font-mono tracking-tight">
-                <NumberTicker value={data.total_revenue_rescued_inr} currency />
+                <NumberTicker key={data.total_revenue_rescued_inr} value={data.total_revenue_rescued_inr} currency />
               </div>
               <div className="text-zinc-400 text-xs md:text-sm mt-2">
                 Legacy checkout would have <span className="text-rose-400 font-semibold">LOST</span> this revenue to cart abandonment
@@ -71,7 +90,9 @@ export default function RevenueRescue({ isOpen, onClose }: { isOpen: boolean; on
                 <div className="w-8 h-8 rounded-lg bg-cyan-950/50 border border-cyan-800/60 flex items-center justify-center text-cyan-400 mb-3">
                   <Store size={18} />
                 </div>
-                <div className="text-cyan-400 font-bold text-lg font-mono">{fmt(data.zopa_recovered_paise)}</div>
+                <div className="text-cyan-400 font-bold text-lg font-mono">
+                  <NumberTicker key={data.zopa_recovered_paise} value={data.zopa_recovered_paise / 100} currency />
+                </div>
                 <div className="text-zinc-300 text-xs font-medium mt-0.5">ZOPA Bargaining Recovery</div>
                 <div className="text-zinc-500 text-[11px] mt-1 font-mono">{data.zopa_recovered_count} sales rescued</div>
               </div>
@@ -80,7 +101,9 @@ export default function RevenueRescue({ isOpen, onClose }: { isOpen: boolean; on
                 <div className="w-8 h-8 rounded-lg bg-amber-950/50 border border-amber-800/60 flex items-center justify-center text-amber-400 mb-3">
                   <Link2 size={18} />
                 </div>
-                <div className="text-amber-400 font-bold text-lg font-mono">{fmt(data.payment_link_rescued_paise)}</div>
+                <div className="text-amber-400 font-bold text-lg font-mono">
+                  <NumberTicker key={data.payment_link_rescued_paise} value={data.payment_link_rescued_paise / 100} currency />
+                </div>
                 <div className="text-zinc-300 text-xs font-medium mt-0.5">Payment Link Rescue</div>
                 <div className="text-zinc-500 text-[11px] mt-1 font-mono">{data.payment_link_rescued_count} shortfalls converted</div>
               </div>
@@ -89,13 +112,15 @@ export default function RevenueRescue({ isOpen, onClose }: { isOpen: boolean; on
                 <div className="w-8 h-8 rounded-lg bg-rose-950/50 border border-rose-800/60 flex items-center justify-center text-rose-400 mb-3">
                   <ShieldCheck size={18} />
                 </div>
-                <div className="text-rose-400 font-bold text-lg font-mono">{fmt(data.fraud_blocked_paise)}</div>
-                <div className="text-zinc-300 text-xs font-medium mt-0.5">Fraudulent Spend Blocked</div>
+                <div className="text-rose-400 font-bold text-lg font-mono">
+                  <NumberTicker key={data.fraud_blocked_paise} value={data.fraud_blocked_paise / 100} currency />
+                </div>
+                <div className="text-zinc-300 text-xs font-medium mt-0.5">Hostile spend protected: {fmt(data.fraud_blocked_paise)}</div>
                 <div className="text-zinc-500 text-[11px] mt-1 font-mono">{data.fraud_blocked_count} attacks neutralized</div>
               </div>
             </div>
 
-            {/* Comparison Bar */}
+            {/* Comparison Bar: Legacy loss and MandateMart rescued MUST show the SAME number */}
             <div className="bg-zinc-950/80 rounded-2xl p-5 border border-zinc-800">
               <div className="text-xs font-semibold mb-4 uppercase tracking-wider text-zinc-400">
                 Legacy Checkout vs MandateMart

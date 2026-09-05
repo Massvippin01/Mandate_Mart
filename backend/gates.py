@@ -188,6 +188,11 @@ def mandate_gate(mandate, items: List[dict], proposed_amount: int, db: Session) 
             detail=revoke_detail,
             gate_result="FAIL"
         )
+        try:
+            from main import log_revenue_event
+            log_revenue_event(db, "FRAUD_BLOCKED", proposed_amount * 100, "Kill switch revoked agent transaction attempt")
+        except Exception:
+            pass
         return False, "PASSPORT_REVOKED_BY_HUMAN_KILL_SWITCH"
 
     # 1. Semantic Check
@@ -203,6 +208,11 @@ def mandate_gate(mandate, items: List[dict], proposed_amount: int, db: Session) 
     )
     
     if not sem_pass:
+        try:
+            from main import log_revenue_event
+            log_revenue_event(db, "FRAUD_BLOCKED", proposed_amount * 100, f"Semantic Gate Blocked: {sem_detail}")
+        except Exception:
+            pass
         return False, f"Semantic Gate Blocked: {sem_detail}"
         
     # 2. Financial Check
@@ -236,6 +246,17 @@ def mandate_gate(mandate, items: List[dict], proposed_amount: int, db: Session) 
                 detail=topup_detail,
                 gate_result=None
             )
+            try:
+                from main import log_revenue_event
+                log_revenue_event(db, "PAYMENT_LINK_RESCUE", shortfall * 100, f"Shortfall payment link generated: ₹{shortfall}")
+            except Exception:
+                pass
+        else:
+            try:
+                from main import log_revenue_event
+                log_revenue_event(db, "FRAUD_BLOCKED", proposed_amount * 100, f"Financial Gate Blocked: {fin_detail}")
+            except Exception:
+                pass
             
         return False, f"Financial Gate Blocked: {fin_detail}"
         

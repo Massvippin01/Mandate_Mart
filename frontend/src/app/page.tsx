@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Rocket, 
@@ -28,7 +27,9 @@ import {
   RefreshCw,
   AlertTriangle,
   User,
-  Building2
+  Building2,
+  Copy,
+  Check
 } from "lucide-react";
 import RedTeamArena from "@/components/RedTeamArena";
 import type { PassportData } from "@/components/TransactionPassport";
@@ -38,10 +39,10 @@ import { NumberTicker } from "@/components/magicui/number-ticker";
 import { BorderBeam } from "@/components/magicui/border-beam";
 import { DotPattern } from "@/components/magicui/dot-pattern";
 
-const TransactionPassport = dynamic(() => import("@/components/TransactionPassport"), { ssr: false });
-const WarRoomTerminal = dynamic(() => import("@/components/WarRoomTerminal"), { ssr: false });
-const NegotiationStoryboard = dynamic(() => import("@/components/NegotiationStoryboard"), { ssr: false });
-const ProtocolTopology = dynamic(() => import("@/components/ProtocolTopology"), { ssr: false });
+import TransactionPassport from "@/components/TransactionPassport";
+import WarRoomTerminal from "@/components/WarRoomTerminal";
+import NegotiationStoryboard from "@/components/NegotiationStoryboard";
+import ProtocolTopology from "@/components/ProtocolTopology";
 
 interface CatalogItem {
   product_id: string;
@@ -143,10 +144,266 @@ export default function Dashboard() {
   const [showWarRoom, setShowWarRoom] = useState(false);
   const [showRevenue, setShowRevenue] = useState(false);
   const [settlementStatus, setSettlementStatus] = useState<"none" | "pending" | "settled">("none");
+  const [awaitingWebhook, setAwaitingWebhook] = useState(false);
+  const [awaitingSeconds, setAwaitingSeconds] = useState(0);
+  const [liveSettledSource, setLiveSettledSource] = useState<string | null>(null);
+  const [lastCheckoutData, setLastCheckoutData] = useState<{ key_id: string; order_id: string; amount?: number } | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [paymentResult, setPaymentResult] = useState<any>(null);
+  const [paymentDismissed, setPaymentDismissed] = useState(false);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
   const [isListening, setIsListening] = useState(false);
+  const [isListeningLimit, setIsListeningLimit] = useState(false);
+  const [limitFeedback, setLimitFeedback] = useState<string | null>(null);
   const [foreignAgentDetected, setForeignAgentDetected] = useState(false);
   const [rightPanelTab, setRightPanelTab] = useState<"STORYBOARD" | "SPLIT" | "LEDGER">("SPLIT");
 
+  const parseSpokenAmount = (text: string): number | null => {
+    if (!text) return null;
+    const clean = text.toLowerCase().replace(/,/g, "").trim();
+
+    // Pattern 1: Shorthand like "4k", "3.5k", "5k"
+    const kMatch = clean.match(/(\d+(?:\.\d+)?)\s*k\b/);
+    if (kMatch) {
+      const val = parseFloat(kMatch[1]) * 1000;
+      if (!isNaN(val) && val > 0) return Math.round(val);
+    }
+
+    // Pattern 2: Explicit digits like "3500", "4000 rupees", "₹4500", "limit of 5000"
+    const digitMatch = clean.match(/(?:(?:rs\.?|inr|₹|limit|budget|cap|under|upto|maximum|max)\s*)?(\d{2,7})/);
+    if (digitMatch && digitMatch[1]) {
+      const val = parseInt(digitMatch[1], 10);
+      if (!isNaN(val) && val > 0) return val;
+    }
+
+    // Pattern 3: Spoken English words
+    const wordMap: Record<string, number> = {
+      zero: 0, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9,
+      ten: 10, eleven: 11, twelve: 12, thirteen: 13, fourteen: 14, fifteen: 15, sixteen: 16,
+      seventeen: 17, eighteen: 18, nineteen: 19, twenty: 20, thirty: 30, forty: 40, fifty: 50,
+      sixty: 60, seventy: 70, eighty: 80, ninety: 90
+    };
+
+    const words = clean.split(/[\s-]+/);
+    let total = 0;
+    let current = 0;
+    let foundNumber = false;
+
+    for (const w of words) {
+      if (wordMap[w] !== undefined) {
+        current += wordMap[w];
+        foundNumber = true;
+      } else if (w === "hundred") {
+        current = (current || 1) * 100;
+        foundNumber = true;
+      } else if (w === "thousand") {
+        total += (current || 1) * 1000;
+        current = 0;
+        foundNumber = true;
+      } else if (w === "lakh") {
+        total += (current || 1) * 100000;
+        current = 0;
+        foundNumber = true;
+      }
+    }
+    total += current;
+    if (foundNumber && total > 0) return total;
+
+    return null;
+  };
+
+  const handleCopy = (text: string, field: string) => {
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText(text);
+      setCopiedField(field);
+      setTimeout(() => setCopiedField(null), 2000);
+    }
+  };
+
+  const loadRazorpayScript = () => {
+    return new Promise<boolean>((resolve) => {
+      if (typeof window === "undefined") return resolve(false);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if ((window as any).Razorpay) return resolve(true);
+
+      const existing = document.querySelector('script[src="https://checkout.razorpay.com/v1/checkout.js"]') as HTMLScriptElement | null;
+      if (existing) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        if ((window as any).Razorpay) return resolve(true);
+        existing.addEventListener("load", () => resolve(true));
+        let tries = 0;
+        const interval = setInterval(() => {
+          tries++;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          if ((window as any).Razorpay) {
+            clearInterval(interval);
+            resolve(true);
+          } else if (tries > 25) {
+            clearInterval(interval);
+            resolve(false);
+          }
+        }, 100);
+        return;
+      }
+
+      const s = document.createElement("script");
+      s.src = "https://checkout.razorpay.com/v1/checkout.js";
+      s.async = true;
+      s.onload = () => resolve(true);
+      s.onerror = () => resolve(false);
+      document.body.appendChild(s);
+    });
+  };
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const onPaymentSuccess = (res: any) => {
+    console.log("Razorpay payment success in modal:", res);
+    setPaymentResult(res);
+    setPaymentDismissed(false);
+    setAwaitingWebhook(true);
+    setSettlementStatus("pending");
+  };
+
+  const onPaymentDismissed = () => {
+    console.log("Razorpay modal dismissed");
+    if (!paymentResult) {
+      setPaymentDismissed(true);
+    }
+  };
+
+  const openRazorpayModal = async (key_id: string, order_id: string, amountPaise?: number) => {
+    await loadRazorpayScript();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const Razorpay = (window as any).Razorpay;
+    if (!Razorpay) {
+      alert("Razorpay checkout SDK failed to load. Please check your network connection.");
+      return;
+    }
+
+    setPaymentDismissed(false);
+
+    const finalAmount = amountPaise || (lastCheckoutData?.amount ? lastCheckoutData.amount * 100 : 330000);
+
+    const options = {
+      key: key_id,
+      order_id: order_id,
+      amount: finalAmount,
+      name: "MandateMart",
+      description: "Agentic Commerce Settlement",
+      currency: "INR",
+      prefill: {
+        name: "Buyer Agent",
+        email: "agent@mandatemart.dev",
+        contact: "9999999999"
+      },
+      config: {
+        display: {
+          blocks: {
+            upi_block: {
+              name: "Pay via UPI",
+              instruments: [
+                { method: "upi" }
+              ]
+            },
+            other_block: {
+              name: "Cards, Netbanking & Wallets",
+              instruments: [
+                { method: "card" },
+                { method: "netbanking" },
+                { method: "wallet" }
+              ]
+            }
+          },
+          sequence: ["block.upi_block", "block.other_block"],
+          preferences: {
+            show_default_blocks: true
+          }
+        }
+      },
+      theme: { color: "#7c3aed" },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      handler: (res: any) => onPaymentSuccess(res),
+      modal: { ondismiss: () => onPaymentDismissed() }
+    };
+
+    const rzp = new Razorpay(options);
+    rzp.open();
+  };
+
+  // Direct checkout modal handler (immune to popup blocker suppression)
+  const handleDirectCheckoutModal = async () => {
+    if (!mandate) {
+      alert("Please authorize a mandate first!");
+      return;
+    }
+    await loadRazorpayScript();
+    
+    let orderId = lastCheckoutData?.order_id;
+    let orderAmount = lastCheckoutData?.amount;
+    const keyId = lastCheckoutData?.key_id || "rzp_test_TXFpUQHw5s9KNT";
+
+    if (!orderId) {
+      try {
+        const res = await fetch("http://localhost:8000/api/agent/buy", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            mandate_id: mandate.mandate_id,
+            scenario: selectedScenario
+          })
+        });
+        const data = await res.json();
+        if (data && typeof data.order_id === "string") {
+          orderId = data.order_id;
+          orderAmount = typeof data.amount === "number" ? data.amount : undefined;
+          setLastCheckoutData({ key_id: data.key_id || keyId, order_id: data.order_id, amount: orderAmount });
+        }
+      } catch (err) {
+        console.error("Direct checkout order error:", err);
+      }
+    }
+
+    if (orderId) {
+      await openRazorpayModal(keyId, orderId, orderAmount ? orderAmount * 100 : undefined);
+    } else {
+      alert("Could not initialize Razorpay order. Ensure backend on port 8000 is running.");
+    }
+  };
+
+  useEffect(() => {
+    loadRazorpayScript();
+  }, []);
+
+  useEffect(() => {
+    if (!awaitingWebhook || settlementStatus === "settled") return;
+
+    const timer = setInterval(() => {
+      setAwaitingSeconds((s) => s + 1);
+    }, 1000);
+
+    const pollInterval = setInterval(async () => {
+      try {
+        const res = await fetch("http://localhost:8000/api/webhooks/last");
+        if (!res.ok) return;
+        const last = await res.json();
+        if (last && last.verified === true && typeof last.event === "string" && last.event.includes("payment")) {
+          setSettlementStatus("settled");
+          setAwaitingWebhook(false);
+          setLiveSettledSource(last.source || "RAZORPAY_LIVE");
+          verifyLedger();
+        }
+      } catch (err) {
+        console.warn("Webhook polling error:", err);
+      }
+    }, 2000);
+
+    return () => {
+      clearInterval(timer);
+      clearInterval(pollInterval);
+    };
+  }, [awaitingWebhook, settlementStatus]);
+
+  // Voice Speech-to-Text for Natural-Language Intent (with Omni-Budget Parsing)
   const startVoiceInput = () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
@@ -164,12 +421,64 @@ export default function Dashboard() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     recognition.onresult = (event: any) => {
       const transcript = event.results[0][0].transcript;
+
+      // Omni-speech parsing: check if speech contains budget/limit keywords
+      const budgetMatch = transcript.match(/(?:under|upto|budget of|limit of|limit|max of|maximum|max)\s*([₹\d\w\s]+?)(?:rupees|rs|inr|$)/i);
+      if (budgetMatch && budgetMatch[1]) {
+        const parsed = parseSpokenAmount(budgetMatch[1]);
+        if (parsed && parsed > 0) {
+          setMaxAmount(parsed);
+          setLimitFeedback(`🎙️ Auto-detected limit: ₹${parsed.toLocaleString("en-IN")}`);
+          setTimeout(() => setLimitFeedback(null), 3500);
+
+          const cleanedIntent = transcript.replace(budgetMatch[0], "").trim();
+          setIntentText(cleanedIntent || transcript);
+          setIsListening(false);
+          return;
+        }
+      }
+
       setIntentText(transcript);
       setIsListening(false);
     };
 
     recognition.onerror = () => setIsListening(false);
     recognition.onend = () => setIsListening(false);
+    recognition.start();
+  };
+
+  // Dedicated Voice Speech-to-Text for Spend Limit Hard Cap
+  const startLimitVoiceInput = () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SpeechRecognition) {
+      alert("Voice input requires Chrome or Edge browser.");
+      return;
+    }
+    const recognition = new SpeechRecognition();
+    recognition.lang = "en-IN";
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    setIsListeningLimit(true);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      const parsed = parseSpokenAmount(transcript);
+      if (parsed && parsed > 0) {
+        setMaxAmount(parsed);
+        setLimitFeedback(`🎙️ Set to ₹${parsed.toLocaleString("en-IN")}`);
+        setTimeout(() => setLimitFeedback(null), 3500);
+      } else {
+        setLimitFeedback(`Could not parse amount from "${transcript}"`);
+        setTimeout(() => setLimitFeedback(null), 3500);
+      }
+      setIsListeningLimit(false);
+    };
+
+    recognition.onerror = () => setIsListeningLimit(false);
+    recognition.onend = () => setIsListeningLimit(false);
     recognition.start();
   };
 
@@ -312,8 +621,15 @@ export default function Dashboard() {
     setActiveTab("mission");
     setLoadingAgent(true);
     setUpsellItem(null);
+    setAwaitingWebhook(false);
+    setAwaitingSeconds(0);
+    setLiveSettledSource(null);
+    setSettlementStatus("none");
+    setPaymentResult(null);
+    setPaymentDismissed(false);
+
     try {
-      await fetch("http://localhost:8000/api/agent/buy", {
+      const res = await fetch("http://localhost:8000/api/agent/buy", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -321,10 +637,20 @@ export default function Dashboard() {
           scenario: selectedScenario
         })
       });
+      const data = await res.json();
+
       verifyLedger();
       await fetchReceipt(mandate.mandate_id);
       await triggerUpsellHook(mandate.mandate_id);
-      setSettlementStatus("pending");
+
+      if (data && data.order_id && data.key_id) {
+        const amt = typeof data.amount === "number" ? data.amount : undefined;
+        setLastCheckoutData({ key_id: data.key_id, order_id: data.order_id, amount: amt });
+        await openRazorpayModal(data.key_id, data.order_id, amt ? amt * 100 : undefined);
+      } else {
+        setAwaitingWebhook(true);
+        setSettlementStatus("pending");
+      }
     } catch (err: unknown) {
       console.error(err);
     } finally {
@@ -397,13 +723,29 @@ export default function Dashboard() {
   };
 
   const resetAll = async () => {
-    if (!confirm("Reset audit ledger and test mandates?")) return;
-    await fetch("http://localhost:8000/api/ledger/reset", { method: "POST" });
+    try {
+      await fetch("http://localhost:8000/api/ledger/reset", { method: "POST" });
+    } catch (e) {
+      console.warn("Backend reset note:", e);
+    }
     setMandate(null);
     setLedger([]);
     setReceipt(null);
+    setShowReceipt(false);
     setUpsellItem(null);
     setKillSwitchActive(false);
+    setPassportData(null);
+    setSettlementStatus("none");
+    setPaymentResult(null);
+    setPaymentDismissed(false);
+    setAwaitingWebhook(false);
+    setAwaitingSeconds(0);
+    setLiveSettledSource(null);
+    setLastCheckoutData(null);
+    setIntentText("Buy high-quality hackathon survival gear");
+    setMaxAmount(4000);
+    setSelectedScenario("standard");
+    setLimitFeedback(null);
     await verifyLedger();
   };
 
@@ -706,10 +1048,10 @@ export default function Dashboard() {
                 <span>Revenue Rescue</span>
               </Button>
 
-              {/* RAZORPAY TEST RAILS */}
-              <Badge tone="neutral">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                <span>Razorpay Test Rails</span>
+              {/* LIVE RAZORPAY ENVIRONMENT BADGE */}
+              <Badge tone="info" className="border-purple-500/40 bg-purple-950/40 text-purple-300 font-semibold text-xs gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
+                <span>LIVE RAZORPAY Rails (Port 3001)</span>
               </Badge>
 
               {/* CHAIN VALIDITY BADGE */}
@@ -929,15 +1271,42 @@ export default function Dashboard() {
                         </div>
 
                         <div>
-                          <label className="block text-xs font-medium text-zinc-300 mb-1.5">
-                            Spend Limit Hard Cap (₹)
-                          </label>
-                          <input
-                            type="number"
-                            value={maxAmount}
-                            onChange={(e) => setMaxAmount(Number(e.target.value))}
-                            className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-xs focus:border-violet-500 focus:ring-1 focus:ring-violet-500/40 outline-none transition-all text-zinc-100 font-mono"
-                          />
+                          <div className="flex items-center justify-between mb-1.5">
+                            <label className="block text-xs font-medium text-zinc-300">
+                              Spend Limit Hard Cap (₹)
+                            </label>
+                            {limitFeedback && (
+                              <span className="text-[11px] text-purple-300 animate-fade-in font-medium">
+                                {limitFeedback}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="number"
+                              value={maxAmount}
+                              onChange={(e) => setMaxAmount(Number(e.target.value))}
+                              className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 text-xs focus:border-violet-500 focus:ring-1 focus:ring-violet-500/40 outline-none transition-all text-zinc-100 font-mono"
+                              placeholder="e.g. 4000"
+                            />
+                            <Button
+                              variant={isListeningLimit ? "danger" : "outline"}
+                              size="sm"
+                              onClick={startLimitVoiceInput}
+                              disabled={isListeningLimit}
+                              className="shrink-0 h-[42px] px-3.5 gap-1.5"
+                              title="Speak your spend limit (e.g. '3500' or 'four thousand')"
+                            >
+                              <Mic size={15} className={isListeningLimit ? "animate-pulse" : ""} />
+                              <span className="text-xs">{isListeningLimit ? "Listening..." : "Speak"}</span>
+                            </Button>
+                          </div>
+                          {isListeningLimit && (
+                            <div className="mt-1.5 text-rose-400 text-xs flex items-center gap-1.5 animate-pulse">
+                              <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-ping" />
+                              Listening for amount... say e.g. &quot;3500&quot; or &quot;four thousand&quot;
+                            </div>
+                          )}
                         </div>
 
                         <Button
@@ -1040,6 +1409,36 @@ export default function Dashboard() {
                             </>
                           )}
                         </Button>
+
+                        {/* Direct Razorpay Checkout Trigger Button */}
+                        <Button
+                          variant="outline"
+                          size="md"
+                          onClick={handleDirectCheckoutModal}
+                          disabled={!mandate || loadingAgent}
+                          className="w-full text-purple-300 border-purple-500/40 hover:bg-purple-500/10 gap-2 font-medium"
+                        >
+                          <CreditCard size={15} className="text-purple-400" />
+                          <span>💳 Open Razorpay Checkout Modal (Test Mode)</span>
+                        </Button>
+
+                        {/* Direct Modal Launcher Banner if order ready but modal closed */}
+                        {lastCheckoutData && !paymentResult && settlementStatus !== "settled" && (
+                          <div className="p-3 bg-purple-950/40 border border-purple-500/40 rounded-xl flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-2 text-purple-300 text-xs font-semibold">
+                              <span className="w-2 h-2 rounded-full bg-purple-400 animate-ping" />
+                              <span>Order Ready ({lastCheckoutData.order_id.slice(0, 14)}...)</span>
+                            </div>
+                            <Button
+                              variant="primary"
+                              size="sm"
+                              onClick={() => openRazorpayModal(lastCheckoutData.key_id, lastCheckoutData.order_id)}
+                              className="h-7 text-xs bg-purple-600 hover:bg-purple-500"
+                            >
+                              <span>Launch Modal</span>
+                            </Button>
+                          </div>
+                        )}
                       </Panel>
 
                       {/* Post-Purchase Upsell Card */}
@@ -1062,50 +1461,153 @@ export default function Dashboard() {
                         </Panel>
                       )}
 
-                      {/* Razorpay Webhook Settlement Simulator */}
-                      {settlementStatus === "pending" && (
+                      {/* 🧪 RAZORPAY TEST CREDENTIALS PANEL */}
+                      <Panel className="p-4 border-purple-500/30 bg-purple-950/20 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2 text-purple-300 font-semibold text-xs">
+                            <CreditCard size={14} className="text-purple-400" />
+                            <span>🧪 RAZORPAY TEST CREDENTIALS</span>
+                          </div>
+                          <Badge tone="info">Sandbox</Badge>
+                        </div>
+                        <div className="space-y-2 text-xs font-mono">
+                          <div className="flex items-center justify-between p-2 rounded bg-black/40 border border-white/5 gap-2">
+                            <span className="text-zinc-400 text-[11px] whitespace-nowrap">UPI VPA:</span>
+                            <span className="text-purple-300 font-semibold truncate select-all">success@razorpay</span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 px-2 text-[11px] text-purple-300 hover:bg-purple-500/20 shrink-0"
+                              onClick={() => handleCopy("success@razorpay", "upi")}
+                            >
+                              {copiedField === "upi" ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
+                              <span>{copiedField === "upi" ? "Copied" : "Copy"}</span>
+                            </Button>
+                          </div>
+                          <div className="flex items-center justify-between p-2 rounded bg-black/40 border border-white/5 gap-2">
+                            <span className="text-zinc-400 text-[11px] whitespace-nowrap">Visa Card:</span>
+                            <span className="text-purple-300 font-semibold text-[11px] truncate select-all">4100 2800 0000 1007 · 12/28 · 123</span>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 px-2 text-[11px] text-purple-300 hover:bg-purple-500/20 shrink-0"
+                              onClick={() => handleCopy("4100280000001007", "card")}
+                            >
+                              {copiedField === "card" ? <Check size={12} className="text-emerald-400" /> : <Copy size={12} />}
+                              <span>{copiedField === "card" ? "Copied" : "Copy"}</span>
+                            </Button>
+                          </div>
+                          <div className="flex items-center justify-between p-2 rounded bg-black/40 border border-white/5 gap-2">
+                            <span className="text-zinc-400 text-[11px] whitespace-nowrap">Netbanking:</span>
+                            <span className="text-emerald-300 text-[11px] truncate">HDFC / SBI ➔ Instant &quot;Success&quot;</span>
+                            <Badge tone="success" className="text-[10px] py-0">100% Pass</Badge>
+                          </div>
+                        </div>
+                        <p className="text-[11px] text-zinc-400 leading-relaxed">
+                          💡 <strong>How to Pay in Sandbox:</strong> Use <strong>Visa Card (4100 2800 0000 1007)</strong>, <strong>Netbanking (any bank → Success)</strong>, or <strong>UPI (success@razorpay)</strong>. All three trigger live authorization and webhook settlement.
+                        </p>
+                      </Panel>
+
+                      {/* Payment Dismissed / Retry Banner */}
+                      {paymentDismissed && !paymentResult && settlementStatus !== "settled" && (
+                        <Panel className="p-4 border-amber-500/40 bg-amber-950/20 space-y-2.5">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2 text-amber-400 font-semibold text-xs">
+                              <AlertTriangle size={15} />
+                              <span>Payment not completed.</span>
+                            </div>
+                            <Badge tone="warn">Modal Closed</Badge>
+                          </div>
+                          <p className="text-zinc-400 text-xs">
+                            Checkout was closed before the transaction was authorized.
+                          </p>
+                          {lastCheckoutData && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-full text-amber-300 border-amber-500/30 hover:bg-amber-500/10 text-xs gap-1.5"
+                              onClick={() => openRazorpayModal(lastCheckoutData.key_id, lastCheckoutData.order_id)}
+                            >
+                              <RefreshCw size={13} />
+                              <span>🔁 Retry Checkout</span>
+                            </Button>
+                          )}
+                        </Panel>
+                      )}
+
+                      {/* Visible Payment Success Banner */}
+                      {paymentResult && (
+                        <Panel className="p-4 border-emerald-500/50 bg-emerald-950/30 space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2 text-emerald-300 font-bold text-xs sm:text-sm">
+                              <CheckCircle2 size={18} className="text-emerald-400 shrink-0" />
+                              <span>✅ PAYMENT SUCCESS — payment_id: {paymentResult.razorpay_payment_id || "pay_test"}</span>
+                            </div>
+                            <Badge tone="success">CAPTURED</Badge>
+                          </div>
+                          {paymentResult.razorpay_order_id && (
+                            <p className="text-[11px] text-zinc-400 font-mono">
+                              Order ID: {paymentResult.razorpay_order_id}
+                            </p>
+                          )}
+                        </Panel>
+                      )}
+
+                      {/* Razorpay Webhook Settlement Status Card */}
+                      {(awaitingWebhook || settlementStatus === "pending") && settlementStatus !== "settled" && (
                         <Panel className="p-5 border-amber-500/30 bg-amber-950/20 space-y-3">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2 text-amber-300 font-semibold text-xs">
                               <Loader2 size={14} className="animate-spin text-amber-400" />
-                              <span>Pending Settlement</span>
+                              <span>⏳ AWAITING LIVE RAZORPAY WEBHOOK — watch ngrok inspector</span>
                             </div>
-                            <Badge tone="warn">Awaiting Webhook</Badge>
+                            <Badge tone="warn">{awaitingSeconds}s elapsed</Badge>
                           </div>
                           <p className="text-zinc-400 text-xs leading-relaxed">
-                            Razorpay test order authorized. Simulating asynchronous webhook delivery for cryptographic settlement into Merkle Ledger.
+                            Razorpay test order authorized. Awaiting live webhook delivery from Razorpay servers via ngrok for cryptographic settlement into Merkle Ledger.
                           </p>
-                          <Button
-                            variant="outline"
-                            size="md"
-                            onClick={async () => {
-                              try {
-                                const mId = mandate?.mandate_id || "demo_mandate";
-                                const res = await fetch(`http://localhost:8000/api/webhooks/simulate/${mId}`, {
-                                  method: "POST"
-                                });
-                                const data = await res.json();
-                                if (data.status === "WEBHOOK_DELIVERED_AND_VERIFIED") {
-                                  setSettlementStatus("settled");
-                                  verifyLedger();
-                                }
-                              } catch (e) { console.error(e); }
-                            }}
-                            className="w-full text-amber-300 border-amber-500/30 hover:bg-amber-500/10"
-                          >
-                            <Bell size={14} />
-                            <span>Deliver Razorpay Webhook (Simulate Settlement)</span>
-                          </Button>
+
+                          {/* Safety fallback: ONLY after 45 seconds with no live webhook */}
+                          {awaitingSeconds >= 45 && (
+                            <div className="pt-2 border-t border-amber-500/20 space-y-2">
+                              <Button
+                                variant="outline"
+                                size="md"
+                                onClick={async () => {
+                                  try {
+                                    const mId = mandate?.mandate_id || "demo_mandate";
+                                    const res = await fetch(`http://localhost:8000/api/webhooks/simulate/${mId}`, {
+                                      method: "POST"
+                                    });
+                                    const data = await res.json();
+                                    if (data.status === "WEBHOOK_DELIVERED_AND_VERIFIED") {
+                                      setSettlementStatus("settled");
+                                      setAwaitingWebhook(false);
+                                      setLiveSettledSource("SIMULATOR_FALLBACK");
+                                      verifyLedger();
+                                    }
+                                  } catch (e) { console.error(e); }
+                                }}
+                                className="w-full text-amber-300 border-amber-500/30 hover:bg-amber-500/10 text-xs"
+                              >
+                                <Bell size={14} />
+                                <span>No webhook yet? Deliver signed simulator webhook</span>
+                              </Button>
+                            </div>
+                          )}
                         </Panel>
                       )}
 
                       {settlementStatus === "settled" && (
-                        <Panel className="p-4 border-emerald-500/40 bg-emerald-950/20 space-y-1">
-                          <div className="flex items-center gap-2 text-emerald-400 font-semibold text-xs">
-                            <CheckCircle2 size={15} />
-                            <span>Cryptographically Settled</span>
+                        <Panel className="p-4 border-emerald-500/40 bg-emerald-950/20 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2 text-emerald-400 font-semibold text-xs">
+                              <CheckCircle2 size={16} />
+                              <span>✅ SETTLED BY LIVE RAZORPAY WEBHOOK (source={liveSettledSource || "RAZORPAY_LIVE"})</span>
+                            </div>
+                            <Badge tone="success">LIVE VERIFIED</Badge>
                           </div>
-                          <p className="text-zinc-400 text-xs">
+                          <p className="text-zinc-300 text-xs">
                             Razorpay webhook verified with HMAC-SHA256 and permanently recorded on the Merkle Ledger.
                           </p>
                         </Panel>

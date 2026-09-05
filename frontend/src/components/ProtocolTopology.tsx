@@ -1,16 +1,19 @@
 "use client";
 
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { 
   ReactFlow, 
   Background, 
   Controls, 
+  MiniMap,
   BackgroundVariant, 
   Handle, 
   Position, 
   Node, 
   Edge,
-  NodeProps 
+  NodeProps,
+  applyNodeChanges,
+  NodeChange
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { 
@@ -24,7 +27,8 @@ import {
   Link2,
   LucideIcon,
   Activity,
-  AlertTriangle
+  AlertTriangle,
+  RotateCcw
 } from "lucide-react";
 
 // Icon mapping
@@ -154,57 +158,69 @@ class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoundarySta
   }
 }
 
+// Initial node positions constant for layout reset
+const DEFAULT_POSITIONS: Record<string, { x: number; y: number }> = {
+  human: { x: 40, y: 220 },
+  policy: { x: 300, y: 110 },
+  passport: { x: 300, y: 330 },
+  buyer: { x: 580, y: 110 },
+  merchant: { x: 580, y: 330 },
+  gate: { x: 880, y: 80 },
+  razorpay: { x: 880, y: 240 },
+  ledger: { x: 880, y: 400 },
+};
+
 const INITIAL_NODES: Node[] = [
   // Column 1: HUMAN
   {
     id: "human",
     type: "protocol",
-    position: { x: 40, y: 220 },
+    position: DEFAULT_POSITIONS.human,
     data: { label: "HUMAN", sub: "Sets intent + leash", icon: "User", status: "idle" },
   },
   // Column 2: POLICY, PASSPORT
   {
     id: "policy",
     type: "protocol",
-    position: { x: 300, y: 110 },
+    position: DEFAULT_POSITIONS.policy,
     data: { label: "POLICY", sub: "NL → JSON mandate", icon: "FileJson", status: "idle" },
   },
   {
     id: "passport",
     type: "protocol",
-    position: { x: 300, y: 330 },
+    position: DEFAULT_POSITIONS.passport,
     data: { label: "PASSPORT", sub: "Ed25519 signed", icon: "KeyRound", status: "idle" },
   },
   // Column 3: BUYER, MERCHANT
   {
     id: "buyer",
     type: "protocol",
-    position: { x: 580, y: 110 },
+    position: DEFAULT_POSITIONS.buyer,
     data: { label: "BUYER AGENT", sub: "Gemini negotiator", icon: "Bot", status: "idle" },
   },
   {
     id: "merchant",
     type: "protocol",
-    position: { x: 580, y: 330 },
+    position: DEFAULT_POSITIONS.merchant,
     data: { label: "MERCHANT AGENT", sub: "ZOPA + reserve floor", icon: "Store", status: "idle" },
   },
   // Column 4: GATE, RAZORPAY, LEDGER
   {
     id: "gate",
     type: "protocol",
-    position: { x: 880, y: 80 },
+    position: DEFAULT_POSITIONS.gate,
     data: { label: "DOUBLE GATE", sub: "Semantic + Deterministic", icon: "ShieldCheck", status: "idle" },
   },
   {
     id: "razorpay",
     type: "protocol",
-    position: { x: 880, y: 240 },
+    position: DEFAULT_POSITIONS.razorpay,
     data: { label: "RAZORPAY RAILS", sub: "Orders + Links", icon: "CreditCard", status: "idle" },
   },
   {
     id: "ledger",
     type: "protocol",
-    position: { x: 880, y: 400 },
+    position: DEFAULT_POSITIONS.ledger,
     data: { label: "MERKLE LEDGER", sub: "SHA-256 chain", icon: "Link2", status: "idle" },
   },
 ];
@@ -229,6 +245,24 @@ export default function ProtocolTopology() {
   const [nodes, setNodes] = useState<Node[]>(INITIAL_NODES);
   const [edges, setEdges] = useState<Edge[]>(INITIAL_EDGES);
   const timersRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  // Enable dragging: update node positions when dragged
+  const onNodesChange = useCallback(
+    (changes: NodeChange[]) => {
+      setNodes((nds) => applyNodeChanges(changes, nds));
+    },
+    []
+  );
+
+  // Reset node positions back to DEFAULT_POSITIONS without affecting live status colors
+  const resetLayout = useCallback(() => {
+    setNodes((nds) =>
+      nds.map((n) => ({
+        ...n,
+        position: DEFAULT_POSITIONS[n.id] ?? n.position,
+      }))
+    );
+  }, []);
 
   useEffect(() => {
     // Guard against double-mount by creating inside effect and closing in cleanup
@@ -388,9 +422,9 @@ export default function ProtocolTopology() {
   }, []);
 
   return (
-    /* STEP 4: Sizing wrapper div */
+    /* Sizing wrapper div */
     <div className="h-[calc(100vh-240px)] min-h-[540px] w-full flex flex-col glass-card border border-zinc-800/80 rounded-2xl overflow-hidden shadow-2xl">
-      {/* ── TOP LEGEND ROW ── */}
+      {/* ── TOP LEGEND & CONTROLS ROW ── */}
       <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-3.5 bg-zinc-950/90 border-b border-zinc-800/80">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 px-3 py-1 rounded-xl bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 font-mono text-xs font-bold shadow-inner">
@@ -403,45 +437,79 @@ export default function ProtocolTopology() {
           </div>
         </div>
 
-        {/* Legend: 🟢 pass · 🔴 blocked · 🟡 negotiating · ⚪ idle */}
-        <div className="flex items-center gap-4 text-xs font-mono text-zinc-400 bg-zinc-900/80 px-4 py-1.5 rounded-xl border border-zinc-800">
-          <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-green-500 shadow-[0_0_6px_rgba(34,197,94,0.6)]" /> pass
-          </span>
-          <span className="text-zinc-600">•</span>
-          <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.6)]" /> blocked
-          </span>
-          <span className="text-zinc-600">•</span>
-          <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.6)]" /> negotiating
-          </span>
-          <span className="text-zinc-600">•</span>
-          <span className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-gray-500" /> idle
-          </span>
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Legend: 🟢 pass · 🔴 blocked · 🟡 negotiating · ⚪ idle */}
+          <div className="flex items-center gap-3 text-xs font-mono text-zinc-400 bg-zinc-900/80 px-3.5 py-1.5 rounded-xl border border-zinc-800">
+            <span className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-green-500 shadow-[0_0_6px_rgba(34,197,94,0.6)]" /> pass
+            </span>
+            <span className="text-zinc-600">•</span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.6)]" /> blocked
+            </span>
+            <span className="text-zinc-600">•</span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.6)]" /> negotiating
+            </span>
+            <span className="text-zinc-600">•</span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-gray-500" /> idle
+            </span>
+          </div>
+
+          {/* Reset Layout button */}
+          <button
+            type="button"
+            onClick={resetLayout}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-zinc-800 hover:border-zinc-700 text-xs font-mono transition-all shadow-sm active:scale-95 cursor-pointer"
+            title="Reset node layout to original positions"
+          >
+            <RotateCcw size={13} className="text-indigo-400" />
+            <span>⟲ Reset Layout</span>
+          </button>
         </div>
       </div>
 
       {/* ── GRAPH CANVAS WITH ERROR BOUNDARY ── */}
       <div className="flex-1 w-full relative bg-[#09090e]">
+        {/* Tiny hint chip in top-right corner */}
+        <div className="absolute top-3 right-3 z-10 px-3 py-1.5 rounded-xl bg-zinc-950/80 border border-zinc-800/80 text-[11px] font-mono text-zinc-400 backdrop-blur-md shadow-lg pointer-events-none flex items-center gap-1.5">
+          <span>🖱️ Drag nodes · Scroll to zoom · ⟲ to reset</span>
+        </div>
+
         <ErrorBoundary>
           <ReactFlow 
             nodes={nodes} 
             edges={edges} 
-            nodeTypes={nodeTypes} 
+            nodeTypes={nodeTypes}
+            onNodesChange={onNodesChange}
             fitView 
+            panOnDrag={true}
+            zoomOnScroll={true}
             colorMode="dark"
             nodesConnectable={false}
+            edgesReconnectable={false}
             proOptions={{ hideAttribution: true }}
-            minZoom={0.6}
-            maxZoom={1.4}
+            minZoom={0.5}
+            maxZoom={1.6}
           >
             <Background variant={BackgroundVariant.Dots} gap={24} color="#1e1e30" />
-            <Controls showInteractive={false} className="!bg-zinc-900 !border-zinc-800 !fill-zinc-400 [&>button]:!border-zinc-800" />
+            <Controls className="!bg-zinc-900 !border-zinc-800 !fill-zinc-400 [&>button]:!border-zinc-800" />
+            <MiniMap 
+              className="!bg-zinc-900/90 !border !border-zinc-800 !rounded-xl overflow-hidden" 
+              nodeColor={(n) => {
+                const s = (n.data as unknown as ProtocolNodeData)?.status;
+                if (s === "active") return "#06b6d4";
+                if (s === "pass") return "#22c55e";
+                if (s === "fail") return "#ef4444";
+                return "#3f3f46";
+              }}
+              maskColor="rgba(9, 9, 14, 0.7)"
+            />
           </ReactFlow>
         </ErrorBoundary>
       </div>
     </div>
   );
 }
+
